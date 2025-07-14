@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir:*)",
+      "Bash(dotnet build)",
+      "Bash(rm:*)",
+      "Bash(msbuild:*)",
+      "Bash(find:*)",
+      "Bash(dotnet restore:*)"
+    ],
+    "deny": []
+  }
+}
