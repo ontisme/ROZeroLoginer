@@ -1,8 +1,10 @@
 using System;
 using System.Collections.Generic;
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Linq;
+using System.Runtime.CompilerServices;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
@@ -13,16 +15,46 @@ using ROZeroLoginer.Windows;
 
 namespace ROZeroLoginer
 {
-    public partial class MainWindow : Window
+    public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private readonly DataService _dataService;
         private readonly TotpGenerator _totpGenerator;
-        private readonly GlobalHotkeyService _hotkeyService;
+        private readonly LowLevelKeyboardHookService _hotkeyService;
         private readonly WindowValidationService _windowValidationService;
         private DispatcherTimer _totpTimer;
         private ObservableCollection<Account> _accounts;
         private Account _selectedAccount;
         private bool _isSelectionWindowOpen = false;
+        private AppSettings _currentSettings;
+        private ObservableCollection<AccountDisplayItem> _displayAccounts;
+
+        public AppSettings CurrentSettings
+        {
+            get => _currentSettings;
+            set
+            {
+                _currentSettings = value;
+                OnPropertyChanged();
+                UpdateDisplayAccounts();
+            }
+        }
+
+        public ObservableCollection<AccountDisplayItem> DisplayAccounts
+        {
+            get => _displayAccounts;
+            set
+            {
+                _displayAccounts = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public event PropertyChangedEventHandler PropertyChanged;
+
+        protected virtual void OnPropertyChanged([CallerMemberName] string propertyName = null)
+        {
+            PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(propertyName));
+        }
 
         public MainWindow()
         {
@@ -30,8 +62,12 @@ namespace ROZeroLoginer
             
             _dataService = new DataService();
             _totpGenerator = new TotpGenerator();
-            _hotkeyService = new GlobalHotkeyService();
+            _hotkeyService = new LowLevelKeyboardHookService();
             _windowValidationService = new WindowValidationService();
+            
+            CurrentSettings = _dataService.GetSettings();
+            DisplayAccounts = new ObservableCollection<AccountDisplayItem>();
+            this.DataContext = this;
             
             InitializeTimer();
             LoadAccounts();
@@ -55,7 +91,7 @@ namespace ROZeroLoginer
             if (_accounts == null)
             {
                 _accounts = new ObservableCollection<Account>(accounts);
-                AccountsDataGrid.ItemsSource = _accounts;
+                AccountsDataGrid.ItemsSource = DisplayAccounts;
             }
             else
             {
@@ -66,7 +102,19 @@ namespace ROZeroLoginer
                 }
             }
             
+            UpdateDisplayAccounts();
             AccountCountTextBlock.Text = _accounts.Count.ToString();
+        }
+
+        private void UpdateDisplayAccounts()
+        {
+            if (_accounts == null || DisplayAccounts == null) return;
+
+            DisplayAccounts.Clear();
+            foreach (var account in _accounts)
+            {
+                DisplayAccounts.Add(new AccountDisplayItem(account, CurrentSettings));
+            }
         }
 
         private void SetupHotkey()
@@ -95,13 +143,6 @@ namespace ROZeroLoginer
                 return;
             }
 
-            // 檢查當前視窗是否為 RO 遊戲視窗
-            if (!_windowValidationService.IsRagnarokWindow())
-            {
-                StatusTextBlock.Text = "當前視窗不是 Ragnarok 遊戲視窗";
-                return;
-            }
-
             if (_accounts == null || _accounts.Count == 0)
             {
                 MessageBox.Show("沒有可用的帳號", "ROZero Loginer", MessageBoxButton.OK, MessageBoxImage.Information);
@@ -113,6 +154,9 @@ namespace ROZeroLoginer
             
             // 當視窗關閉時重置標記
             selectionWindow.Closed += (s, e) => _isSelectionWindowOpen = false;
+            
+            // 強制視窗置於最前方
+            selectionWindow.Topmost = true;
             
             if (selectionWindow.ShowDialog() == true)
             {
@@ -177,7 +221,8 @@ namespace ROZeroLoginer
 
         private void AccountsDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            _selectedAccount = AccountsDataGrid.SelectedItem as Account;
+            var selectedDisplayItem = AccountsDataGrid.SelectedItem as AccountDisplayItem;
+            _selectedAccount = selectedDisplayItem?.Account;
             
             if (_selectedAccount != null)
             {
@@ -208,6 +253,44 @@ namespace ROZeroLoginer
                 _dataService.SaveAccount(newAccount);
                 LoadAccounts();
                 StatusTextBlock.Text = "新增帳號成功";
+            }
+        }
+
+        private void BatchAddButton_Click(object sender, RoutedEventArgs e)
+        {
+            var batchAddWindow = new BatchAddWindow();
+            if (batchAddWindow.ShowDialog() == true)
+            {
+                var importedAccounts = batchAddWindow.ImportedAccounts;
+                var successCount = 0;
+                var errorCount = 0;
+
+                foreach (var account in importedAccounts)
+                {
+                    try
+                    {
+                        _dataService.SaveAccount(account);
+                        successCount++;
+                    }
+                    catch (Exception ex)
+                    {
+                        System.Diagnostics.Debug.WriteLine($"Failed to save account {account.Name}: {ex.Message}");
+                        errorCount++;
+                    }
+                }
+
+                LoadAccounts();
+                
+                if (errorCount == 0)
+                {
+                    StatusTextBlock.Text = $"批次新增成功：{successCount} 個帳號";
+                }
+                else
+                {
+                    StatusTextBlock.Text = $"批次新增完成：{successCount} 個成功，{errorCount} 個失敗";
+                    MessageBox.Show($"部分帳號新增失敗\n成功：{successCount} 個\n失敗：{errorCount} 個", 
+                                  "批次新增結果", MessageBoxButton.OK, MessageBoxImage.Warning);
+                }
             }
         }
 
@@ -247,6 +330,9 @@ namespace ROZeroLoginer
             {
                 var settings = settingsWindow.Settings;
                 _dataService.SaveSettings(settings);
+                
+                // 更新當前設定以觸發UI更新
+                CurrentSettings = settings;
                 
                 // 重新設定熱鍵
                 _hotkeyService.UnregisterAllHotkeys();

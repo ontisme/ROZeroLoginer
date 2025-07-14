@@ -13,6 +13,11 @@ namespace ROZeroLoginer.Models
         private bool _showNotifications = true;
         private int _otpValiditySeconds = 30;
         private int _otpInputDelayMs = 2000;
+        private bool _privacyModeEnabled = true;
+        private bool _hideNames = false;
+        private bool _hideUsernames = false;
+        private bool _hidePasswords = true;
+        private bool _hideSecretKeys = true;
 
         public Keys Hotkey
         {
@@ -70,6 +75,56 @@ namespace ROZeroLoginer.Models
             set
             {
                 _otpInputDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool PrivacyModeEnabled
+        {
+            get => _privacyModeEnabled;
+            set
+            {
+                _privacyModeEnabled = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool HideNames
+        {
+            get => _hideNames;
+            set
+            {
+                _hideNames = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool HideUsernames
+        {
+            get => _hideUsernames;
+            set
+            {
+                _hideUsernames = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool HidePasswords
+        {
+            get => _hidePasswords;
+            set
+            {
+                _hidePasswords = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool HideSecretKeys
+        {
+            get => _hideSecretKeys;
+            set
+            {
+                _hideSecretKeys = value;
                 OnPropertyChanged();
             }
         }

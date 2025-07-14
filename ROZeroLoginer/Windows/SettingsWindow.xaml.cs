@@ -27,7 +27,12 @@ namespace ROZeroLoginer.Windows
                 StartWithWindows = settings.StartWithWindows,
                 ShowNotifications = settings.ShowNotifications,
                 OtpValiditySeconds = settings.OtpValiditySeconds,
-                OtpInputDelayMs = settings.OtpInputDelayMs
+                OtpInputDelayMs = settings.OtpInputDelayMs,
+                PrivacyModeEnabled = settings.PrivacyModeEnabled,
+                HideNames = settings.HideNames,
+                HideUsernames = settings.HideUsernames,
+                HidePasswords = settings.HidePasswords,
+                HideSecretKeys = settings.HideSecretKeys
             };
             
             LoadSettings();
@@ -40,6 +45,13 @@ namespace ROZeroLoginer.Windows
             ShowNotificationsCheckBox.IsChecked = _settings.ShowNotifications;
             OtpValidityTextBox.Text = _settings.OtpValiditySeconds.ToString();
             OtpDelayTextBox.Text = _settings.OtpInputDelayMs.ToString();
+            
+            // 隱私模式設定
+            PrivacyModeEnabledCheckBox.IsChecked = _settings.PrivacyModeEnabled;
+            HideNamesCheckBox.IsChecked = _settings.HideNames;
+            HideUsernamesCheckBox.IsChecked = _settings.HideUsernames;
+            HidePasswordsCheckBox.IsChecked = _settings.HidePasswords;
+            HideSecretKeysCheckBox.IsChecked = _settings.HideSecretKeys;
             
             // 設定熱鍵下拉選單
             var hotkeyName = _settings.Hotkey.ToString();
@@ -77,9 +89,9 @@ namespace ROZeroLoginer.Windows
                 return false;
             }
 
-            if (!int.TryParse(OtpDelayTextBox.Text, out int otpDelay) || otpDelay < 500 || otpDelay > 10000)
+            if (!int.TryParse(OtpDelayTextBox.Text, out int otpDelay) || otpDelay < 100 || otpDelay > 10000)
             {
-                MessageBox.Show("OTP 輸入延遲必須介於 500 到 10000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("OTP 輸入延遲必須介於 100 到 10000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
                 OtpDelayTextBox.Focus();
                 return false;
             }
@@ -94,6 +106,13 @@ namespace ROZeroLoginer.Windows
             _settings.ShowNotifications = ShowNotificationsCheckBox.IsChecked == true;
             _settings.OtpValiditySeconds = int.Parse(OtpValidityTextBox.Text);
             _settings.OtpInputDelayMs = int.Parse(OtpDelayTextBox.Text);
+            
+            // 隱私模式設定
+            _settings.PrivacyModeEnabled = PrivacyModeEnabledCheckBox.IsChecked == true;
+            _settings.HideNames = HideNamesCheckBox.IsChecked == true;
+            _settings.HideUsernames = HideUsernamesCheckBox.IsChecked == true;
+            _settings.HidePasswords = HidePasswordsCheckBox.IsChecked == true;
+            _settings.HideSecretKeys = HideSecretKeysCheckBox.IsChecked == true;
             
             // 設定熱鍵
             var selectedItem = HotkeyComboBox.SelectedItem as ComboBoxItem;

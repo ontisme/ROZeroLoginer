@@ -1,9 +1,13 @@
 <Window x:Class="ROZeroLoginer.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:utils="clr-namespace:ROZeroLoginer.Utils"
         Title="Ragnarok Online Zero 帳號管理工具" Height="600" Width="1000" MinHeight="500" MinWidth="800"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundBrush}">
+    <Window.Resources>
+        <utils:PrivacyConverter x:Key="PrivacyConverter"/>
+    </Window.Resources>
     <Grid Margin="16">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
@@ -15,6 +19,7 @@
         <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
             <StackPanel Orientation="Horizontal">
                 <Button Name="AddAccountButton" Content="新增帳號" Style="{StaticResource PrimaryButtonStyle}" Click="AddAccountButton_Click"/>
+                <Button Name="BatchAddButton" Content="批次新增" Style="{StaticResource PrimaryButtonStyle}" Click="BatchAddButton_Click"/>
                 <Button Name="EditAccountButton" Content="編輯帳號" Style="{StaticResource SecondaryButtonStyle}" Click="EditAccountButton_Click" IsEnabled="False"/>
                 <Button Name="DeleteAccountButton" Content="刪除帳號" Style="{StaticResource DestructiveButtonStyle}" Click="DeleteAccountButton_Click" IsEnabled="False"/>
                 <Separator Margin="8,0"/>
@@ -50,10 +55,10 @@
                               Background="Transparent" BorderThickness="0"
                               GridLinesVisibility="None" HeadersVisibility="Column">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="名稱" Binding="{Binding Name}" Width="*"/>
-                            <DataGridTextColumn Header="帳號" Binding="{Binding Username}" Width="*"/>
-                            <DataGridTextColumn Header="密碼" Binding="{Binding Password}" Width="*"/>
-                            <DataGridTextColumn Header="Secret Key" Binding="{Binding OtpSecret}" Width="*"/>
+                            <DataGridTextColumn Header="名稱" Binding="{Binding DisplayName}" Width="*"/>
+                            <DataGridTextColumn Header="帳號" Binding="{Binding DisplayUsername}" Width="*"/>
+                            <DataGridTextColumn Header="密碼" Binding="{Binding DisplayPassword}" Width="*"/>
+                            <DataGridTextColumn Header="Secret Key" Binding="{Binding DisplaySecretKey}" Width="*"/>
                         </DataGrid.Columns>
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">

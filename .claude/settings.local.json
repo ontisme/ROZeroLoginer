@@ -6,7 +6,8 @@
       "Bash(rm:*)",
       "Bash(msbuild:*)",
       "Bash(find:*)",
-      "Bash(dotnet restore:*)"
+      "Bash(dotnet restore:*)",
+      "Bash(git add:*)"
     ],
     "deny": []
   }

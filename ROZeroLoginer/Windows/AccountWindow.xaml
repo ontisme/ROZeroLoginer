@@ -1,7 +1,7 @@
 <Window x:Class="ROZeroLoginer.Windows.AccountWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="帳號設定" Height="400" Width="500" 
+        Title="帳號設定" Height="462" Width="500" 
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     <Grid Margin="20">
         <Grid.RowDefinitions>

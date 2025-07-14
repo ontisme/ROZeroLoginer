@@ -81,6 +81,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Windows\BatchAddWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Windows\SettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -88,17 +92,23 @@
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Models\Account.cs" />
+    <Compile Include="Models\AccountDisplayItem.cs" />
     <Compile Include="Models\AppSettings.cs" />
     <Compile Include="Services\DataService.cs" />
     <Compile Include="Services\GlobalHotkeyService.cs" />
     <Compile Include="Services\InputService.cs" />
+    <Compile Include="Services\LowLevelKeyboardHookService.cs" />
     <Compile Include="Services\WindowValidationService.cs" />
     <Compile Include="Utils\TotpGenerator.cs" />
+    <Compile Include="Utils\PrivacyConverter.cs" />
     <Compile Include="Windows\AccountSelectionWindow.xaml.cs">
       <DependentUpon>AccountSelectionWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\AccountWindow.xaml.cs">
       <DependentUpon>AccountWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\BatchAddWindow.xaml.cs">
+      <DependentUpon>BatchAddWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
