@@ -25,7 +25,7 @@ A modern WPF application for managing Ragnarok Online Zero accounts with TOTP au
 
 ## 🖼️ Screenshots | 螢幕截圖
 
-*Coming Soon - Add screenshots of your application here*
+![圖](https://i.ibb.co/ZR4BBMj7/a.png)
 
 ## 📋 Requirements | 系統需求
 
