@@ -1,7 +1,7 @@
 <Window x:Class="ROZeroLoginer.Windows.AccountSelectionWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="選擇帳號" Height="400" Width="600" 
+        Title="選擇帳號" Height="500" Width="600" 
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
         Topmost="True" ShowInTaskbar="False" 
         Focusable="True" KeyboardNavigation.TabNavigation="Cycle">
@@ -21,19 +21,6 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="名稱" Binding="{Binding Name}" Width="*"/>
                 <DataGridTextColumn Header="帳號" Binding="{Binding Username}" Width="*"/>
-                <DataGridTextColumn Header="最後使用" Binding="{Binding LastUsed, StringFormat=yyyy-MM-dd HH:mm}" Width="140"/>
-                <DataGridTemplateColumn Header="TOTP" Width="120">
-                    <DataGridTemplateColumn.CellTemplate>
-                        <DataTemplate>
-                            <StackPanel Orientation="Horizontal">
-                                <TextBlock Name="TotpText" FontFamily="Consolas" FontWeight="Bold" 
-                                           VerticalAlignment="Center" Margin="0,0,5,0"/>
-                                <TextBlock Name="CountdownText" VerticalAlignment="Center" 
-                                           Foreground="Gray" FontSize="10"/>
-                            </StackPanel>
-                        </DataTemplate>
-                    </DataGridTemplateColumn.CellTemplate>
-                </DataGridTemplateColumn>
             </DataGrid.Columns>
         </DataGrid>
 

@@ -29,8 +29,6 @@ namespace ROZeroLoginer.Windows
         private const int SW_RESTORE = 9;
         private const int SW_SHOW = 5;
 
-        private readonly TotpGenerator _totpGenerator;
-        private DispatcherTimer _totpTimer;
         private List<Account> _accounts;
 
         public Account SelectedAccount { get; private set; }
@@ -39,10 +37,7 @@ namespace ROZeroLoginer.Windows
         {
             InitializeComponent();
             
-            _totpGenerator = new TotpGenerator();
             _accounts = accounts;
-            
-            InitializeTimer();
             LoadAccounts();
             
             // 確保視窗獲得焦點以接收鍵盤事件
@@ -78,71 +73,15 @@ namespace ROZeroLoginer.Windows
             };
         }
 
-        private void InitializeTimer()
-        {
-            _totpTimer = new DispatcherTimer();
-            _totpTimer.Interval = TimeSpan.FromSeconds(1);
-            _totpTimer.Tick += TotpTimer_Tick;
-            _totpTimer.Start();
-        }
-
         private void LoadAccounts()
         {
-            // 按最後使用時間排序，最近使用的在前面
-            var sortedAccounts = _accounts.OrderByDescending(a => a.LastUsed).ToList();
-            AccountsDataGrid.ItemsSource = sortedAccounts;
+            // 按帳號順序排序
+            AccountsDataGrid.ItemsSource = _accounts;
             
             // 自動選擇第一個帳號
-            if (sortedAccounts.Count > 0)
+            if (_accounts.Count > 0)
             {
                 AccountsDataGrid.SelectedIndex = 0;
-            }
-        }
-
-        private void TotpTimer_Tick(object sender, EventArgs e)
-        {
-            UpdateTotpDisplay();
-        }
-
-        private void UpdateTotpDisplay()
-        {
-            var accounts = AccountsDataGrid.ItemsSource as List<Account>;
-            if (accounts == null) return;
-
-            // 更新每個帳號的TOTP顯示
-            for (int i = 0; i < accounts.Count; i++)
-            {
-                var account = accounts[i];
-                var row = AccountsDataGrid.ItemContainerGenerator.ContainerFromIndex(i) as DataGridRow;
-                
-                if (row != null)
-                {
-                    var totpColumn = AccountsDataGrid.Columns[3];
-                    var cell = totpColumn.GetCellContent(row) as StackPanel;
-                    
-                    if (cell != null)
-                    {
-                        var totpText = cell.Children[0] as TextBlock;
-                        var countdownText = cell.Children[1] as TextBlock;
-                        
-                        if (totpText != null && countdownText != null)
-                        {
-                            try
-                            {
-                                var totp = _totpGenerator.GenerateTotp(account.OtpSecret);
-                                var remaining = _totpGenerator.GetTimeRemaining();
-                                
-                                totpText.Text = totp;
-                                countdownText.Text = $"({remaining}s)";
-                            }
-                            catch (Exception)
-                            {
-                                totpText.Text = "錯誤";
-                                countdownText.Text = "";
-                            }
-                        }
-                    }
-                }
             }
         }
 
@@ -215,7 +154,6 @@ namespace ROZeroLoginer.Windows
 
         protected override void OnClosed(EventArgs e)
         {
-            _totpTimer?.Stop();
             base.OnClosed(e);
         }
     }
