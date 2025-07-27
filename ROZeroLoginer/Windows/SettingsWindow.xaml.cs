@@ -32,7 +32,8 @@ namespace ROZeroLoginer.Windows
                 HideNames = settings.HideNames,
                 HideUsernames = settings.HideUsernames,
                 HidePasswords = settings.HidePasswords,
-                HideSecretKeys = settings.HideSecretKeys
+                HideSecretKeys = settings.HideSecretKeys,
+                RoGamePath = settings.RoGamePath
             };
             
             LoadSettings();
@@ -52,6 +53,7 @@ namespace ROZeroLoginer.Windows
             HideUsernamesCheckBox.IsChecked = _settings.HideUsernames;
             HidePasswordsCheckBox.IsChecked = _settings.HidePasswords;
             HideSecretKeysCheckBox.IsChecked = _settings.HideSecretKeys;
+            RoGamePathTextBox.Text = _settings.RoGamePath;
             
             // 設定熱鍵下拉選單
             var hotkeyName = _settings.Hotkey.ToString();
@@ -113,6 +115,7 @@ namespace ROZeroLoginer.Windows
             _settings.HideUsernames = HideUsernamesCheckBox.IsChecked == true;
             _settings.HidePasswords = HidePasswordsCheckBox.IsChecked == true;
             _settings.HideSecretKeys = HideSecretKeysCheckBox.IsChecked == true;
+            _settings.RoGamePath = RoGamePathTextBox.Text;
             
             // 設定熱鍵
             var selectedItem = HotkeyComboBox.SelectedItem as ComboBoxItem;
@@ -232,6 +235,21 @@ namespace ROZeroLoginer.Windows
             catch (Exception ex)
             {
                 MessageBox.Show($"還原失敗: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void BrowseGamePathButton_Click(object sender, RoutedEventArgs e)
+        {
+            var openFileDialog = new Microsoft.Win32.OpenFileDialog
+            {
+                Filter = "執行檔 (*.exe)|*.exe|所有檔案 (*.*)|*.*",
+                Title = "選擇 RO 主程式",
+                FileName = "Ragexe.exe"
+            };
+            
+            if (openFileDialog.ShowDialog() == true)
+            {
+                RoGamePathTextBox.Text = openFileDialog.FileName;
             }
         }
     }

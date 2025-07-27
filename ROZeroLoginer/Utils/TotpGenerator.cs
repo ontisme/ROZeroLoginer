@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
+using System.Threading.Tasks;
 
 namespace ROZeroLoginer.Utils
 {
@@ -49,6 +50,34 @@ namespace ROZeroLoginer.Utils
             var now = DateTimeOffset.UtcNow.ToUnixTimeSeconds();
             var timeInPeriod = (int)(now % period);
             return period - timeInPeriod;
+        }
+
+        public async Task<string> GenerateTotpWithTimingAsync(string secret, int digits = 6, int period = 30, int minimumTimeRemaining = 2)
+        {
+            var timeRemaining = GetTimeRemaining(period);
+            
+            if (timeRemaining <= minimumTimeRemaining)
+            {
+                // 等待到下一個週期開始
+                var waitTime = timeRemaining * 1000; // 轉換為毫秒
+                await Task.Delay(waitTime + 100); // 額外等待100ms確保新週期開始
+            }
+            
+            return GenerateTotp(secret, digits, period);
+        }
+
+        public string GenerateTotpWithTiming(string secret, int digits = 6, int period = 30, int minimumTimeRemaining = 2)
+        {
+            var timeRemaining = GetTimeRemaining(period);
+            
+            if (timeRemaining <= minimumTimeRemaining)
+            {
+                // 等待到下一個週期開始
+                var waitTime = timeRemaining * 1000; // 轉換為毫秒
+                System.Threading.Thread.Sleep(waitTime + 100); // 額外等待100ms確保新週期開始
+            }
+            
+            return GenerateTotp(secret, digits, period);
         }
 
         public bool VerifyTotp(string secret, string inputCode, int tolerance = 1, int digits = 6, int period = 30)

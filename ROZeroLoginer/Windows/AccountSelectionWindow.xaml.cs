@@ -30,14 +30,16 @@ namespace ROZeroLoginer.Windows
         private const int SW_SHOW = 5;
 
         private List<Account> _accounts;
+        private Account _preselectedAccount;
 
         public Account SelectedAccount { get; private set; }
 
-        public AccountSelectionWindow(List<Account> accounts)
+        public AccountSelectionWindow(List<Account> accounts, Account preselectedAccount = null)
         {
             InitializeComponent();
             
             _accounts = accounts;
+            _preselectedAccount = preselectedAccount;
             LoadAccounts();
             
             // 確保視窗獲得焦點以接收鍵盤事件
@@ -78,10 +80,26 @@ namespace ROZeroLoginer.Windows
             // 按帳號順序排序
             AccountsDataGrid.ItemsSource = _accounts;
             
-            // 自動選擇第一個帳號
+            // 自動選擇預選帳號或第一個帳號
             if (_accounts.Count > 0)
             {
-                AccountsDataGrid.SelectedIndex = 0;
+                int selectedIndex = 0;
+                
+                // 如果有預選帳號，尋找其索引
+                if (_preselectedAccount != null)
+                {
+                    for (int i = 0; i < _accounts.Count; i++)
+                    {
+                        if (_accounts[i].Id == _preselectedAccount.Id)
+                        {
+                            selectedIndex = i;
+                            System.Diagnostics.Debug.WriteLine($"自動選中對應帳號: {_preselectedAccount.Name}");
+                            break;
+                        }
+                    }
+                }
+                
+                AccountsDataGrid.SelectedIndex = selectedIndex;
             }
         }
 

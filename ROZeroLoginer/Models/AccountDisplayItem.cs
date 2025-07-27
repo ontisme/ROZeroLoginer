@@ -7,6 +7,7 @@ namespace ROZeroLoginer.Models
     {
         private Account _account;
         private AppSettings _settings;
+        private bool _isSelected;
 
         public Account Account
         {
@@ -16,6 +17,16 @@ namespace ROZeroLoginer.Models
                 _account = value;
                 OnPropertyChanged();
                 UpdateDisplayProperties();
+            }
+        }
+
+        public bool IsSelected
+        {
+            get => _isSelected;
+            set
+            {
+                _isSelected = value;
+                OnPropertyChanged();
             }
         }
 

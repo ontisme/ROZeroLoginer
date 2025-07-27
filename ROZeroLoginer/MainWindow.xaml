@@ -2,13 +2,17 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:utils="clr-namespace:ROZeroLoginer.Utils"
-        Title="Ragnarok Online Zero 帳號管理工具" Height="600" Width="1000" MinHeight="500" MinWidth="800"
+        Title="Ragnarok Online Zero 帳號管理工具" Height="600" Width="913" MinHeight="500" MinWidth="800"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundBrush}">
     <Window.Resources>
         <utils:PrivacyConverter x:Key="PrivacyConverter"/>
     </Window.Resources>
     <Grid Margin="16">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="21*"/>
+            <ColumnDefinition Width="100*"/>
+        </Grid.ColumnDefinitions>
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
@@ -16,11 +20,12 @@
         </Grid.RowDefinitions>
 
         <!-- Toolbar -->
-        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8">
+        <Border Grid.Row="0" Style="{StaticResource CardStyle}" Margin="0,0,0,8" Grid.ColumnSpan="2">
             <StackPanel Orientation="Horizontal">
                 <Button Name="AddAccountButton" Content="新增帳號" Style="{StaticResource PrimaryButtonStyle}" Click="AddAccountButton_Click"/>
                 <Button Name="BatchAddButton" Content="批次新增" Style="{StaticResource PrimaryButtonStyle}" Click="BatchAddButton_Click"/>
                 <Button Name="EditAccountButton" Content="編輯帳號" Style="{StaticResource SecondaryButtonStyle}" Click="EditAccountButton_Click" IsEnabled="False"/>
+                <Button Name="BatchEditButton" Content="批次編輯" Style="{StaticResource SecondaryButtonStyle}" Click="BatchEditButton_Click"/>
                 <Button Name="DeleteAccountButton" Content="刪除帳號" Style="{StaticResource DestructiveButtonStyle}" Click="DeleteAccountButton_Click" IsEnabled="False"/>
                 <Separator Margin="8,0"/>
                 <Button Name="SettingsButton" Content="設定" Style="{StaticResource SecondaryButtonStyle}" Click="SettingsButton_Click"/>
@@ -31,7 +36,7 @@
         </Border>
 
         <!-- Main Content -->
-        <Grid Grid.Row="1">
+        <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,57" Grid.RowSpan="2">
             <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="*"/>
                 <ColumnDefinition Width="8"/>
@@ -45,20 +50,82 @@
                         <RowDefinition Height="Auto"/>
                         <RowDefinition Height="*"/>
                     </Grid.RowDefinitions>
-                    
-                    <TextBlock Grid.Row="0" Text="帳號列表" FontSize="18" FontWeight="SemiBold" 
-                               Foreground="{StaticResource ForegroundBrush}" Margin="0,0,0,16"/>
-                    
+
+                    <Grid Grid.Row="0" Margin="0,0,0,16">
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <!-- 標題和按鈕 -->
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                            <TextBlock Text="帳號列表" FontSize="18" FontWeight="SemiBold" 
+                                       Foreground="{StaticResource ForegroundBrush}" VerticalAlignment="Center"/>
+                            <StackPanel Orientation="Horizontal" Margin="20,0,0,0">
+                                <Button Name="SelectAllButton" Content="全選" Style="{StaticResource SecondaryButtonStyle}" 
+                                        Click="SelectAllButton_Click" Width="65" Height="32" FontSize="12"/>
+                                <Button Name="SelectNoneButton" Content="全不選" Style="{StaticResource SecondaryButtonStyle}" 
+                                        Click="SelectNoneButton_Click" Width="65" Height="32" FontSize="12" Margin="6,0,0,0"/>
+                                <Button Name="LaunchSelectedButton" Content="啟動選中" Style="{StaticResource PrimaryButtonStyle}" 
+                                        Click="LaunchSelectedButton_Click" Width="85" Height="32" FontSize="12" Margin="10,0,0,0" IsEnabled="False"/>
+                            </StackPanel>
+                        </StackPanel>
+
+                        <!-- 分組TAB -->
+                        <TabControl Grid.Row="1" Name="GroupTabControl" SelectionChanged="GroupTabControl_SelectionChanged"
+                                    Background="Transparent" BorderThickness="0" Padding="0">
+                            <TabControl.Resources>
+                                <Style TargetType="TabItem">
+                                    <Setter Property="Template">
+                                        <Setter.Value>
+                                            <ControlTemplate TargetType="TabItem">
+                                                <Border Name="Border" Background="Transparent" BorderThickness="0,0,0,2" 
+                                                        BorderBrush="Transparent" CornerRadius="6,6,0,0" Margin="0,0,4,0" 
+                                                        Padding="16,8,16,10">
+                                                    <ContentPresenter x:Name="ContentSite" VerticalAlignment="Center" 
+                                                                      HorizontalAlignment="Center" ContentSource="Header" 
+                                                                      TextBlock.FontSize="13" TextBlock.FontWeight="Medium"/>
+                                                </Border>
+                                                <ControlTemplate.Triggers>
+                                                    <Trigger Property="IsMouseOver" Value="True">
+                                                        <Setter TargetName="Border" Property="Background" Value="{StaticResource AccentBrush}"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="True">
+                                                        <Setter TargetName="Border" Property="Background" Value="White"/>
+                                                        <Setter TargetName="Border" Property="BorderBrush" Value="{StaticResource PrimaryBrush}"/>
+                                                        <Setter TargetName="ContentSite" Property="TextBlock.Foreground" Value="{StaticResource PrimaryBrush}"/>
+                                                        <Setter TargetName="ContentSite" Property="TextBlock.FontWeight" Value="SemiBold"/>
+                                                    </Trigger>
+                                                    <Trigger Property="IsSelected" Value="False">
+                                                        <Setter TargetName="ContentSite" Property="TextBlock.Foreground" Value="{StaticResource MutedForegroundBrush}"/>
+                                                    </Trigger>
+                                                </ControlTemplate.Triggers>
+                                            </ControlTemplate>
+                                        </Setter.Value>
+                                    </Setter>
+                                </Style>
+                            </TabControl.Resources>
+                        </TabControl>
+                    </Grid>
+
                     <DataGrid Grid.Row="1" Name="AccountsDataGrid" AutoGenerateColumns="False" 
                               SelectionMode="Single" CanUserAddRows="False" 
                               SelectionChanged="AccountsDataGrid_SelectionChanged"
                               Background="Transparent" BorderThickness="0"
                               GridLinesVisibility="None" HeadersVisibility="Column">
                         <DataGrid.Columns>
-                            <DataGridTextColumn Header="名稱" Binding="{Binding DisplayName}" Width="*"/>
-                            <DataGridTextColumn Header="帳號" Binding="{Binding DisplayUsername}" Width="*"/>
-                            <DataGridTextColumn Header="密碼" Binding="{Binding DisplayPassword}" Width="*"/>
-                            <DataGridTextColumn Header="Secret Key" Binding="{Binding DisplaySecretKey}" Width="*"/>
+                            <DataGridCheckBoxColumn Header="✓" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40">
+                                <DataGridCheckBoxColumn.ElementStyle>
+                                    <Style TargetType="CheckBox">
+                                        <EventSetter Event="Click" Handler="CheckBox_Changed"/>
+                                    </Style>
+                                </DataGridCheckBoxColumn.ElementStyle>
+                            </DataGridCheckBoxColumn>
+                            <DataGridTextColumn Header="分組" Binding="{Binding Account.Group}" Width="100" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="名稱" Binding="{Binding DisplayName}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="帳號" Binding="{Binding DisplayUsername}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="密碼" Binding="{Binding DisplayPassword}" Width="*" IsReadOnly="True"/>
+                            <DataGridTextColumn Header="Secret Key" Binding="{Binding DisplaySecretKey}" Width="*" IsReadOnly="True"/>
                         </DataGrid.Columns>
                         <DataGrid.RowStyle>
                             <Style TargetType="DataGridRow">
@@ -120,21 +187,22 @@
                         <Button Name="CopyTotpButton" Content="複製 TOTP" Style="{StaticResource SecondaryButtonStyle}" 
                                 Click="CopyTotpButton_Click" IsEnabled="False"/>
                     </StackPanel>
+
                 </Grid>
             </Border>
         </Grid>
 
         <!-- Status Bar -->
-        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,8,0,0">
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,8,0,0" Grid.ColumnSpan="2">
             <Grid>
                 <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="*"/>
                     <ColumnDefinition Width="Auto"/>
                 </Grid.ColumnDefinitions>
-                
+
                 <TextBlock Grid.Column="0" Name="StatusTextBlock" Text="就緒" 
                            Foreground="{StaticResource MutedForegroundBrush}" VerticalAlignment="Center"/>
-                
+
                 <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
                     <TextBlock Text="熱鍵: " Foreground="{StaticResource MutedForegroundBrush}"/>
                     <TextBlock Name="HotkeyTextBlock" Text="Home" FontWeight="SemiBold" 

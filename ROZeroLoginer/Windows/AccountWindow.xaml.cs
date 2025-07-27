@@ -1,7 +1,10 @@
 using System;
+using System.Collections.Generic;
+using System.Linq;
 using System.Windows;
 using System.Windows.Threading;
 using ROZeroLoginer.Models;
+using ROZeroLoginer.Services;
 using ROZeroLoginer.Utils;
 
 namespace ROZeroLoginer.Windows
@@ -22,6 +25,7 @@ namespace ROZeroLoginer.Windows
             _account = account ?? new Account();
             
             InitializePreviewTimer();
+            LoadGroups();
             LoadAccountData();
         }
 
@@ -33,6 +37,42 @@ namespace ROZeroLoginer.Windows
             _previewTimer.Start();
         }
 
+        private void LoadGroups()
+        {
+            try
+            {
+                var dataService = new DataService();
+                var allAccounts = dataService.GetAccounts();
+                var existingGroups = allAccounts.Select(a => a.Group).Distinct().OrderBy(g => g).ToList();
+
+                GroupComboBox.Items.Clear();
+                
+                // 添加預設分組
+                if (!existingGroups.Contains("預設"))
+                {
+                    GroupComboBox.Items.Add("預設");
+                }
+                
+                // 添加現有分組
+                foreach (var group in existingGroups)
+                {
+                    if (!string.IsNullOrEmpty(group))
+                    {
+                        GroupComboBox.Items.Add(group);
+                    }
+                }
+                
+                // 設定預設值
+                GroupComboBox.Text = "預設";
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine($"加載分組時發生錯誤: {ex.Message}");
+                GroupComboBox.Items.Add("預設");
+                GroupComboBox.Text = "預設";
+            }
+        }
+
         private void LoadAccountData()
         {
             if (_account != null)
@@ -41,6 +81,7 @@ namespace ROZeroLoginer.Windows
                 UsernameTextBox.Text = _account.Username ?? "";
                 PasswordBox.Password = _account.Password ?? "";
                 OtpSecretTextBox.Text = _account.OtpSecret ?? "";
+                GroupComboBox.Text = _account.Group ?? "預設";
             }
         }
 
@@ -87,6 +128,7 @@ namespace ROZeroLoginer.Windows
                 _account.Username = UsernameTextBox.Text.Trim();
                 _account.Password = PasswordBox.Password;
                 _account.OtpSecret = OtpSecretTextBox.Text.Trim();
+                _account.Group = string.IsNullOrWhiteSpace(GroupComboBox.Text) ? "預設" : GroupComboBox.Text.Trim();
                 
                 DialogResult = true;
                 Close();

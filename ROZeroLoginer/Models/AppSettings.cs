@@ -18,6 +18,7 @@ namespace ROZeroLoginer.Models
         private bool _hideUsernames = false;
         private bool _hidePasswords = true;
         private bool _hideSecretKeys = true;
+        private string _roGamePath = @"C:\Gravity\RagnarokZero\Ragexe.exe";
 
         public Keys Hotkey
         {
@@ -125,6 +126,16 @@ namespace ROZeroLoginer.Models
             set
             {
                 _hideSecretKeys = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public string RoGamePath
+        {
+            get => _roGamePath;
+            set
+            {
+                _roGamePath = value;
                 OnPropertyChanged();
             }
         }
