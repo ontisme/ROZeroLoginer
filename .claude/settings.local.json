@@ -29,7 +29,10 @@
       "Bash(copy:*)",
       "Bash(touch:*)",
       "Bash(del \"C:\\Users\\Lyfx\\source\\repos\\ROZeroLoginer\\ROZeroLoginer\\Services\\DDDDOCR.cs\")",
-      "Bash(del \"C:\\Users\\Lyfx\\source\\repos\\ROZeroLoginer\\ROZeroLoginer\\Services\\OCRService.cs\")"
+      "Bash(del \"C:\\Users\\Lyfx\\source\\repos\\ROZeroLoginer\\ROZeroLoginer\\Services\\OCRService.cs\")",
+      "Bash(git commit:*)",
+      "Bash(git push:*)",
+      "Bash(git pull:*)"
     ],
     "deny": []
   }
