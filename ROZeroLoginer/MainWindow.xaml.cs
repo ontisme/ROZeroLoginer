@@ -276,6 +276,7 @@ namespace ROZeroLoginer
             catch (Exception ex)
             {
                 Dispatcher.Invoke(() => {
+                    LoadAccounts(); // 確保即使出錯也重新載入帳號列表
                     MessageBox.Show($"使用帳號時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
                 });
             }

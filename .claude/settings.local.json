@@ -32,7 +32,9 @@
       "Bash(del \"C:\\Users\\Lyfx\\source\\repos\\ROZeroLoginer\\ROZeroLoginer\\Services\\OCRService.cs\")",
       "Bash(git commit:*)",
       "Bash(git push:*)",
-      "Bash(git pull:*)"
+      "Bash(git pull:*)",
+      "Bash(git tag:*)",
+      "Bash(git stash:*)"
     ],
     "deny": []
   }
