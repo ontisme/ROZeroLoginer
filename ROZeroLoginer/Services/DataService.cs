@@ -13,7 +13,7 @@ namespace ROZeroLoginer.Services
     {
         private readonly string _dataFilePath;
         private readonly string _settingsFilePath;
-        private readonly string _encryptionKey;
+        private string _encryptionKey;
         private List<Account> _accounts;
         private AppSettings _settings;
 
@@ -88,6 +88,13 @@ namespace ROZeroLoginer.Services
         {
             _settings = settings;
             SaveSettingsToFile();
+        }
+
+        public void ForceReload()
+        {
+            _encryptionKey = GenerateOrGetEncryptionKey();
+            LoadData();
+            LoadSettings();
         }
 
         private void LoadData()

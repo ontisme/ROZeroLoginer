@@ -68,6 +68,8 @@
                                         Click="SelectNoneButton_Click" Width="65" Height="32" FontSize="12" Margin="6,0,0,0"/>
                                 <Button Name="LaunchSelectedButton" Content="啟動選中" Style="{StaticResource PrimaryButtonStyle}" 
                                         Click="LaunchSelectedButton_Click" Width="85" Height="32" FontSize="12" Margin="10,0,0,0" IsEnabled="False"/>
+                                <Button Name="DeleteSelectedButton" Content="批次刪除" Style="{StaticResource DestructiveButtonStyle}" 
+                                        Click="DeleteSelectedButton_Click" Width="85" Height="32" FontSize="12" Margin="6,0,0,0" IsEnabled="False"/>
                             </StackPanel>
                         </StackPanel>
 

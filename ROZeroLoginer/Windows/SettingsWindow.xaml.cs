@@ -15,6 +15,7 @@ namespace ROZeroLoginer.Windows
         private AppSettings _settings;
 
         public AppSettings Settings => _settings;
+        public bool DataRestored { get; private set; } = false;
 
         public SettingsWindow(AppSettings settings)
         {
@@ -171,19 +172,22 @@ namespace ROZeroLoginer.Windows
                 {
                     var appDataPath = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "ROZeroLoginer");
                     var accountsFile = Path.Combine(appDataPath, "accounts.dat");
+                    var keyFile = Path.Combine(appDataPath, "key.dat");
                     var settingsFile = Path.Combine(appDataPath, "settings.json");
                     
                     var backupData = new
                     {
                         AccountsData = File.Exists(accountsFile) ? Convert.ToBase64String(File.ReadAllBytes(accountsFile)) : "",
+                        KeyData = File.Exists(keyFile) ? File.ReadAllText(keyFile) : "",
                         SettingsData = File.Exists(settingsFile) ? File.ReadAllText(settingsFile) : "",
-                        BackupDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss")
+                        BackupDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
+                        Version = "1.2.1"
                     };
                     
                     var json = Newtonsoft.Json.JsonConvert.SerializeObject(backupData, Newtonsoft.Json.Formatting.Indented);
                     File.WriteAllText(saveFileDialog.FileName, json);
                     
-                    MessageBox.Show("備份成功！", "備份", MessageBoxButton.OK, MessageBoxImage.Information);
+                    MessageBox.Show("備份成功！包含帳號資料、加密金鑰和設定檔。", "備份", MessageBoxButton.OK, MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
@@ -203,7 +207,7 @@ namespace ROZeroLoginer.Windows
                 
                 if (openFileDialog.ShowDialog() == true)
                 {
-                    var result = MessageBox.Show("還原資料會覆蓋現有的帳號資料，確定要繼續嗎？", 
+                    var result = MessageBox.Show("還原資料會覆蓋現有的帳號資料和設定，確定要繼續嗎？", 
                         "確認還原", MessageBoxButton.YesNo, MessageBoxImage.Question);
                     
                     if (result == MessageBoxResult.Yes)
@@ -215,20 +219,39 @@ namespace ROZeroLoginer.Windows
                         Directory.CreateDirectory(appDataPath);
                         
                         var accountsFile = Path.Combine(appDataPath, "accounts.dat");
+                        var keyFile = Path.Combine(appDataPath, "key.dat");
                         var settingsFile = Path.Combine(appDataPath, "settings.json");
                         
+                        // 備份現有檔案
+                        var backupSuffix = DateTime.Now.ToString("yyyyMMdd_HHmmss");
+                        if (File.Exists(accountsFile))
+                            File.Copy(accountsFile, accountsFile + "." + backupSuffix + ".old", true);
+                        if (File.Exists(keyFile))
+                            File.Copy(keyFile, keyFile + "." + backupSuffix + ".old", true);
+                        if (File.Exists(settingsFile))
+                            File.Copy(settingsFile, settingsFile + "." + backupSuffix + ".old", true);
+                        
+                        // 還原帳號資料
                         if (!string.IsNullOrEmpty((string)backupData.AccountsData))
                         {
                             var accountsBytes = Convert.FromBase64String((string)backupData.AccountsData);
                             File.WriteAllBytes(accountsFile, accountsBytes);
                         }
                         
+                        // 還原加密金鑰（關鍵修復！）
+                        if (!string.IsNullOrEmpty((string)backupData.KeyData))
+                        {
+                            File.WriteAllText(keyFile, (string)backupData.KeyData);
+                        }
+                        
+                        // 還原設定檔
                         if (!string.IsNullOrEmpty((string)backupData.SettingsData))
                         {
                             File.WriteAllText(settingsFile, (string)backupData.SettingsData);
                         }
                         
-                        MessageBox.Show("還原成功！請重新啟動應用程式。", "還原", MessageBoxButton.OK, MessageBoxImage.Information);
+                        DataRestored = true;
+                        MessageBox.Show("還原成功！包含帳號資料、加密金鑰和設定檔。\n點擊確定後將立即重新載入資料。", "還原", MessageBoxButton.OK, MessageBoxImage.Information);
                     }
                 }
             }
