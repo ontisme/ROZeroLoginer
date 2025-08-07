@@ -216,6 +216,15 @@ namespace ROZeroLoginer
 
         private void ShowAccountSelectionWindow()
         {
+            // 檢查當前前台視窗是否為 RO 視窗（熱鍵模式限制）
+            var inputService = new InputService();
+            if (!inputService.IsCurrentWindowRagnarok())
+            {
+                // 當前視窗不是 RO 視窗時，不執行操作
+                LogService.Instance.Info("[ShowAccountSelectionWindow] 熱鍵觸發時前台視窗不是 RO 視窗，忽略操作");
+                return;
+            }
+
             // 檢查是否已有選擇視窗開啟
             if (_isSelectionWindowOpen)
             {

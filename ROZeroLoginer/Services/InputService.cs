@@ -673,9 +673,26 @@ namespace ROZeroLoginer.Services
             }
             else
             {
-                LogService.Instance.Info("[FindRagnarokWindow] 找到 {0} 個 RO 視窗，單個登入模式返回第一個", totalRoWindows);
+                LogService.Instance.Info("[FindRagnarokWindow] 找到 {0} 個 RO 視窗，單個登入模式優先選取前台視窗", totalRoWindows);
 
-                // 單個登入模式：直接返回第一個找到的視窗
+                // 單個登入模式：優先選取當前前台視窗
+                var foregroundWindow = GetForegroundWindow();
+                if (foregroundWindow != IntPtr.Zero)
+                {
+                    // 檢查前台視窗是否在可用的 RO 視窗列表中
+                    var foregroundRoWindow = availableWindows.FirstOrDefault(w => w.handle == foregroundWindow);
+                    if (foregroundRoWindow.handle != IntPtr.Zero)
+                    {
+                        LogService.Instance.Info("[FindRagnarokWindow] 選擇當前前台 RO 視窗: {0}", foregroundWindow);
+                        return foregroundWindow;
+                    }
+                    else
+                    {
+                        LogService.Instance.Debug("[FindRagnarokWindow] 前台視窗不是 RO 視窗，改選第一個可用的 RO 視窗");
+                    }
+                }
+
+                // 如果前台視窗不是 RO 視窗，則返回第一個找到的 RO 視窗
                 var firstWindow = availableWindows.FirstOrDefault();
                 if (firstWindow.handle != IntPtr.Zero)
                 {
@@ -1177,7 +1194,7 @@ namespace ROZeroLoginer.Services
             LogService.Instance.Debug("[ClickUsingMethod1] 點擊操作完成");
         }
 
-        private bool IsCurrentWindowRagnarok(int targetProcessId = 0)
+        public bool IsCurrentWindowRagnarok(int targetProcessId = 0)
         {
             var currentWindow = GetForegroundWindow();
             if (currentWindow == IntPtr.Zero)
