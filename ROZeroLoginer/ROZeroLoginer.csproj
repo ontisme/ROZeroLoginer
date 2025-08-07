@@ -14,6 +14,7 @@
     <WarningLevel>4</WarningLevel>
     <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <Deterministic>true</Deterministic>
+    <RuntimeIdentifiers>win;win-x64;win-x86</RuntimeIdentifiers>
     <NuGetPackageImportStamp>
     </NuGetPackageImportStamp>
   </PropertyGroup>
@@ -103,6 +104,7 @@
     <Compile Include="Models\AccountDisplayItem.cs" />
     <Compile Include="Models\AppSettings.cs" />
     <Compile Include="Services\DataService.cs" />
+    <Compile Include="Services\GameResolutionService.cs" />
     <Compile Include="Services\GlobalHotkeyService.cs" />
     <Compile Include="Services\InputService.cs" />
     <Compile Include="Services\LowLevelKeyboardHookService.cs" />

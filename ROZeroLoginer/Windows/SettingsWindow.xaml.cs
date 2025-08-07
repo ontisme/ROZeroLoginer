@@ -181,7 +181,7 @@ namespace ROZeroLoginer.Windows
                         KeyData = File.Exists(keyFile) ? File.ReadAllText(keyFile) : "",
                         SettingsData = File.Exists(settingsFile) ? File.ReadAllText(settingsFile) : "",
                         BackupDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                        Version = "1.2.1"
+                        Version = "1.2.3"
                     };
                     
                     var json = Newtonsoft.Json.JsonConvert.SerializeObject(backupData, Newtonsoft.Json.Formatting.Indented);

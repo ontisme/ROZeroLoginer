@@ -266,7 +266,7 @@ namespace ROZeroLoginer
                 var totp = _totpGenerator.GenerateTotpWithTiming(account.OtpSecret);
                 var settings = _dataService.GetSettings();
 
-                inputService.SendLogin(account.Username, account.Password, totp, settings.OtpInputDelayMs);
+                inputService.SendLogin(account.Username, account.Password, totp, settings.OtpInputDelayMs, settings);
 
                 _dataService.UpdateAccountLastUsed(account.Id);
 
@@ -779,7 +779,7 @@ namespace ROZeroLoginer
             var inputService = new InputService();
             var totp = _totpGenerator.GenerateTotpWithTiming(account.OtpSecret);
 
-            inputService.SendLogin(account.Username, account.Password, totp, settings.OtpInputDelayMs);
+            inputService.SendLogin(account.Username, account.Password, totp, settings.OtpInputDelayMs, settings);
 
             _dataService.UpdateAccountLastUsed(account.Id);
         }

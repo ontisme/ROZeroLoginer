@@ -2,11 +2,19 @@ using System;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Windows.Forms;
+using ROZeroLoginer.Models;
 
 namespace ROZeroLoginer.Services
 {
     public class InputService
     {
+        private readonly GameResolutionService _resolutionService;
+        
+        public InputService()
+        {
+            _resolutionService = new GameResolutionService();
+        }
+        
         private const int INPUT_KEYBOARD = 1;
         private const int INPUT_MOUSE = 0;
         private const int KEYEVENTF_KEYDOWN = 0x0000;
@@ -37,6 +45,15 @@ namespace ROZeroLoginer.Services
 
         [DllImport("user32.dll")]
         private static extern void mouse_event(uint dwFlags, uint dx, uint dy, uint dwData, IntPtr dwExtraInfo);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetWindowRect(IntPtr hWnd, out RECT lpRect);
+
+        [DllImport("user32.dll")]
+        private static extern bool ClientToScreen(IntPtr hWnd, ref System.Drawing.Point lpPoint);
+
+        [DllImport("user32.dll")]
+        private static extern bool GetClientRect(IntPtr hWnd, out RECT lpRect);
 
         [StructLayout(LayoutKind.Sequential)]
         private struct INPUT
@@ -85,16 +102,34 @@ namespace ROZeroLoginer.Services
             public ushort wParamH;
         }
 
-        public void SendLogin(string username, string password, string otp, int otpDelayMs = 2000)
+        [StructLayout(LayoutKind.Sequential)]
+        private struct RECT
+        {
+            public int Left;
+            public int Top;
+            public int Right;
+            public int Bottom;
+        }
+
+        public void SendLogin(string username, string password, string otp, int otpDelayMs = 2000, AppSettings settings = null)
         {
             var targetWindow = GetForegroundWindow();
 
             // 確保目標視窗在前台
             SetForegroundWindow(targetWindow);
             Thread.Sleep(100);
+            
+            // 載入遊戲解析度設定
+            if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
+            {
+                _resolutionService.LoadResolutionFromConfig(settings.RoGamePath);
+            }
+            
+            // 根據解析度計算同意按鈕位置
+            var (agreeX, agreeY) = _resolutionService.GetAgreeButtonPosition();
 
             // 按下同意
-            LeftClick(650, 600);
+            LeftClick(agreeX, agreeY);
 
             // 輸入帳號
             SendText(username);
@@ -268,9 +303,20 @@ namespace ROZeroLoginer.Services
             var targetWindow = GetForegroundWindow();
             SetForegroundWindow(targetWindow);
             Thread.Sleep(200);
-            
-            // 移動滑鼠到目標位置
-            SetCursorPos(x, y);
+
+            // 使用 ClientToScreen 將客戶區座標轉換為螢幕座標
+            var clientPoint = new System.Drawing.Point(x, y);
+            if (ClientToScreen(targetWindow, ref clientPoint))
+            {
+                // clientPoint 現在包含了正確的螢幕座標（已扣除標題列和邊框）
+                SetCursorPos(clientPoint.X, clientPoint.Y);
+            }
+            else
+            {
+                // 如果無法轉換座標，使用原本的絕對座標
+                SetCursorPos(x, y);
+            }
+
             Thread.Sleep(100);
 
             // 使用 mouse_event API 點擊 (類似按鍵精靈)
