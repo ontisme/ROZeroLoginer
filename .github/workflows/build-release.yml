@@ -34,7 +34,6 @@ jobs:
         mkdir release
         xcopy "ROZeroLoginer\bin\Release\*.exe" release\ /Y
         xcopy "ROZeroLoginer\bin\Release\*.dll" release\ /Y
-        xcopy "ROZeroLoginer\bin\Release\*.config" release\ /Y
       shell: cmd
     
     - name: Upload build artifacts

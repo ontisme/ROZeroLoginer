@@ -2,7 +2,7 @@
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
         xmlns:utils="clr-namespace:ROZeroLoginer.Utils"
-        Title="Ragnarok Online Zero 帳號管理工具" Height="600" Width="913" MinHeight="500" MinWidth="800"
+        Title="RO 帳號管理工具" Height="600" Width="913" MinHeight="500" MinWidth="800"
         WindowStartupLocation="CenterScreen"
         Background="{StaticResource BackgroundBrush}">
     <Window.Resources>
@@ -26,10 +26,9 @@
                 <Button Name="BatchAddButton" Content="批次新增" Style="{StaticResource PrimaryButtonStyle}" Click="BatchAddButton_Click"/>
                 <Button Name="EditAccountButton" Content="編輯帳號" Style="{StaticResource SecondaryButtonStyle}" Click="EditAccountButton_Click" IsEnabled="False"/>
                 <Button Name="BatchEditButton" Content="批次編輯" Style="{StaticResource SecondaryButtonStyle}" Click="BatchEditButton_Click"/>
-                <Button Name="DeleteAccountButton" Content="刪除帳號" Style="{StaticResource DestructiveButtonStyle}" Click="DeleteAccountButton_Click" IsEnabled="False"/>
                 <Separator Margin="8,0"/>
                 <Button Name="SettingsButton" Content="設定" Style="{StaticResource SecondaryButtonStyle}" Click="SettingsButton_Click"/>
-                <Button Name="TestTotpButton" Content="測試TOTP" Style="{StaticResource SecondaryButtonStyle}" Click="TestTotpButton_Click" IsEnabled="False"/>
+                <Button Name="CheckUpdateButton" Content="檢查更新" Style="{StaticResource SecondaryButtonStyle}" Click="CheckUpdateButton_Click"/>
                 <Separator Margin="8,0"/>
                 <Button Name="AboutButton" Content="關於" Style="{StaticResource SecondaryButtonStyle}" Click="AboutButton_Click"/>
             </StackPanel>
@@ -111,18 +110,11 @@
                     </Grid>
 
                     <DataGrid Grid.Row="1" Name="AccountsDataGrid" AutoGenerateColumns="False" 
-                              SelectionMode="Single" CanUserAddRows="False" 
+                              SelectionMode="Extended" CanUserAddRows="False" 
                               SelectionChanged="AccountsDataGrid_SelectionChanged"
                               Background="Transparent" BorderThickness="0"
                               GridLinesVisibility="None" HeadersVisibility="Column">
                         <DataGrid.Columns>
-                            <DataGridCheckBoxColumn Header="✓" Binding="{Binding IsSelected, UpdateSourceTrigger=PropertyChanged}" Width="40">
-                                <DataGridCheckBoxColumn.ElementStyle>
-                                    <Style TargetType="CheckBox">
-                                        <EventSetter Event="Click" Handler="CheckBox_Changed"/>
-                                    </Style>
-                                </DataGridCheckBoxColumn.ElementStyle>
-                            </DataGridCheckBoxColumn>
                             <DataGridTextColumn Header="分組" Binding="{Binding Account.Group}" Width="100" IsReadOnly="True"/>
                             <DataGridTextColumn Header="名稱" Binding="{Binding DisplayName}" Width="*" IsReadOnly="True"/>
                             <DataGridTextColumn Header="帳號" Binding="{Binding DisplayUsername}" Width="*" IsReadOnly="True"/>

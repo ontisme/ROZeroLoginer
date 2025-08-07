@@ -1,0 +1,83 @@
+<Window x:Class="ROZeroLoginer.Windows.LogViewerWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="日誌查看器" Height="600" Width="900" MinHeight="400" MinWidth="600"
+        WindowStartupLocation="CenterScreen"
+        Background="{DynamicResource BackgroundBrush}">
+    <Grid Margin="16">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- Header -->
+        <Border Grid.Row="0" Style="{DynamicResource CardStyle}" Margin="0,0,0,8">
+            <StackPanel Orientation="Horizontal">
+                <TextBlock Text="日誌查看器" FontSize="18" FontWeight="SemiBold" 
+                           Foreground="{DynamicResource ForegroundBrush}" VerticalAlignment="Center"/>
+                <Button Name="RefreshButton" Content="重新整理" Style="{DynamicResource SecondaryButtonStyle}" 
+                        Click="RefreshButton_Click" Margin="20,0,0,0"/>
+                <Button Name="OpenLogDirButton" Content="開啟日誌目錄" Style="{DynamicResource SecondaryButtonStyle}" 
+                        Click="OpenLogDirButton_Click" Margin="8,0,0,0"/>
+                <Button Name="ClearLogButton" Content="清空當前日誌" Style="{DynamicResource DestructiveButtonStyle}" 
+                        Click="ClearLogButton_Click" Margin="8,0,0,0"/>
+            </StackPanel>
+        </Border>
+
+        <!-- Log Content -->
+        <Border Grid.Row="1" Style="{DynamicResource CardStyle}">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Log File Info -->
+                <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,12">
+                    <TextBlock Text="當前日誌文件：" FontWeight="Medium" 
+                               Foreground="{DynamicResource ForegroundBrush}" VerticalAlignment="Center"/>
+                    <TextBlock Name="LogFilePathTextBlock" FontFamily="Consolas" FontSize="11"
+                               Foreground="{DynamicResource MutedForegroundBrush}" VerticalAlignment="Center" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <!-- Log Text -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Auto">
+                    <TextBox Name="LogTextBox" IsReadOnly="True" FontFamily="Consolas" FontSize="12"
+                             Background="Transparent" BorderThickness="0"
+                             TextWrapping="NoWrap" AcceptsReturn="True"
+                             Foreground="{DynamicResource ForegroundBrush}"
+                             ScrollViewer.VerticalScrollBarVisibility="Auto"
+                             ScrollViewer.HorizontalScrollBarVisibility="Auto"/>
+                </ScrollViewer>
+            </Grid>
+        </Border>
+
+        <!-- Footer -->
+        <Border Grid.Row="2" Style="{DynamicResource CardStyle}" Margin="0,8,0,0">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <TextBlock Grid.Column="0" Name="StatusTextBlock" Text="就緒" 
+                           Foreground="{DynamicResource MutedForegroundBrush}" VerticalAlignment="Center"/>
+
+                <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+                    <TextBlock Text="顯示行數: " Foreground="{DynamicResource MutedForegroundBrush}"/>
+                    <ComboBox Name="LineCountComboBox" Width="80" SelectionChanged="LineCountComboBox_SelectionChanged"
+                              Style="{DynamicResource ModernComboBoxStyle}">
+                        <ComboBoxItem Content="100" Tag="100"/>
+                        <ComboBoxItem Content="500" Tag="500"/>
+                        <ComboBoxItem Content="1000" Tag="1000" IsSelected="True"/>
+                        <ComboBoxItem Content="全部" Tag="0"/>
+                    </ComboBox>
+                    <CheckBox Name="AutoRefreshCheckBox" Content="自動重新整理" IsChecked="True" 
+                              Margin="12,0,0,0" VerticalAlignment="Center"
+                              Foreground="{DynamicResource ForegroundBrush}"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+    </Grid>
+</Window>

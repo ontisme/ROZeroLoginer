@@ -34,7 +34,15 @@
       "Bash(git push:*)",
       "Bash(git pull:*)",
       "Bash(git tag:*)",
-      "Bash(git stash:*)"
+      "Bash(git stash:*)",
+      "Bash(\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" ROZeroLoginer.sln)",
+      "Bash(\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" ROZeroLoginer.sln /t:Restore)",
+      "Bash(\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" /t:Restore ROZeroLoginer.sln)",
+      "Bash(\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" \"C:\\Users\\Lyfx\\source\\repos\\ROZeroLoginer\\ROZeroLoginer.sln\" /p:Configuration=Debug /p:Platform=\"Any CPU\")",
+      "Bash(\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" \"C:\\Users\\Lyfx\\source\\repos\\ROZeroLoginer\\ROZeroLoginer.sln\")",
+      "Bash(\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" ROZeroLoginer.sln /p:Configuration=Debug /p:Platform=AnyCPU)",
+      "Bash(\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" ROZeroLoginer.sln /t:Clean)",
+      "Bash(\"C:\\Program Files\\Microsoft Visual Studio\\2022\\Enterprise\\MSBuild\\Current\\Bin\\MSBuild.exe\" \"C:\\Users\\Lyfx\\source\\repos\\ROZeroLoginer\\ROZeroLoginer.sln\" /p:Configuration=Debug /p:Platform=AnyCPU)"
     ],
     "deny": []
   }

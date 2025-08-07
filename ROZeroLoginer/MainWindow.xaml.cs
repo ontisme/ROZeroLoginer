@@ -8,6 +8,7 @@ using System.Linq;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Threading;
 using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
@@ -32,6 +33,7 @@ namespace ROZeroLoginer
         private AppSettings _currentSettings;
         private ObservableCollection<AccountDisplayItem> _displayAccounts;
         private string _currentGroupFilter = "所有分組";
+        private bool _hasNewVersion = false;
 
         public AppSettings CurrentSettings
         {
@@ -65,6 +67,12 @@ namespace ROZeroLoginer
         {
             InitializeComponent();
 
+            // 記錄程序啟動
+            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
+            LogService.Instance.Info("=== ROZero Loginer v{0} 啟動 ===", version);
+            LogService.Instance.Info("作業系統: {0}", Environment.OSVersion);
+            LogService.Instance.Info("工作目錄: {0}", Environment.CurrentDirectory);
+
             _dataService = new DataService();
             _totpGenerator = new TotpGenerator();
             _hotkeyService = new LowLevelKeyboardHookService();
@@ -75,7 +83,6 @@ namespace ROZeroLoginer
             this.DataContext = this;
 
             // 設定視窗標題包含版本號
-            var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
             this.Title = $"Ragnarok Online Zero 帳號管理工具 v{version}";
 
             InitializeTimer();
@@ -84,6 +91,11 @@ namespace ROZeroLoginer
             SetupHotkey();
 
             this.Closing += MainWindow_Closing;
+
+            // 啟動時自動檢查更新
+            CheckForUpdatesOnStartup();
+
+            LogService.Instance.Info("主視窗初始化完成");
         }
 
         private void InitializeTimer()
@@ -172,37 +184,18 @@ namespace ROZeroLoginer
             foreach (var account in filteredAccounts)
             {
                 var displayItem = new AccountDisplayItem(account, CurrentSettings);
-                displayItem.PropertyChanged += DisplayItem_PropertyChanged;
                 DisplayAccounts.Add(displayItem);
             }
         }
 
-        private void DisplayItem_PropertyChanged(object sender, PropertyChangedEventArgs e)
-        {
-            if (e.PropertyName == nameof(AccountDisplayItem.IsSelected))
-            {
-                Dispatcher.BeginInvoke(new Action(() =>
-                {
-                    UpdateLaunchSelectedButtonState();
-                }), DispatcherPriority.Background);
-            }
-        }
 
         private void UpdateLaunchSelectedButtonState()
         {
-            var hasSelected = DisplayAccounts?.Any(item => item.IsSelected) == true;
+            var hasSelected = AccountsDataGrid?.SelectedItems?.Count > 0;
             LaunchSelectedButton.IsEnabled = hasSelected;
             DeleteSelectedButton.IsEnabled = hasSelected;
         }
 
-        private void CheckBox_Changed(object sender, RoutedEventArgs e)
-        {
-            // 立即更新按鈕狀態
-            Dispatcher.BeginInvoke(new Action(() =>
-            {
-                UpdateLaunchSelectedButtonState();
-            }), DispatcherPriority.Background);
-        }
 
         private void SetupHotkey()
         {
@@ -251,22 +244,21 @@ namespace ROZeroLoginer
                 var selectedAccount = selectionWindow.SelectedAccount;
                 if (selectedAccount != null)
                 {
-                    UseAccount(selectedAccount);
+                    UseAccount(selectedAccount, true);
                 }
             }
 
             _isSelectionWindowOpen = false;
         }
 
-        private void UseAccount(Account account)
+        private void UseAccount(Account account, bool skipAgreeButton = false)
         {
             try
             {
                 var inputService = new InputService();
-                var totp = _totpGenerator.GenerateTotpWithTiming(account.OtpSecret);
                 var settings = _dataService.GetSettings();
 
-                inputService.SendLogin(account.Username, account.Password, totp, settings.OtpInputDelayMs, settings);
+                inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, skipAgreeButton);
 
                 _dataService.UpdateAccountLastUsed(account.Id);
 
@@ -317,6 +309,7 @@ namespace ROZeroLoginer
 
         private void AccountsDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
+            // 處理詳細資料顯示 (使用最後選擇的項目)
             var selectedDisplayItem = AccountsDataGrid.SelectedItem as AccountDisplayItem;
             _selectedAccount = selectedDisplayItem?.Account;
 
@@ -326,8 +319,6 @@ namespace ROZeroLoginer
                 UsernameTextBox.Text = _selectedAccount.Username;
 
                 EditAccountButton.IsEnabled = true;
-                DeleteAccountButton.IsEnabled = true;
-                TestTotpButton.IsEnabled = true;
             }
             else
             {
@@ -335,9 +326,10 @@ namespace ROZeroLoginer
                 UsernameTextBox.Text = "";
 
                 EditAccountButton.IsEnabled = false;
-                DeleteAccountButton.IsEnabled = false;
-                TestTotpButton.IsEnabled = false;
             }
+
+            // 更新批次操作按鈕狀態
+            UpdateLaunchSelectedButtonState();
         }
 
         private void AddAccountButton_Click(object sender, RoutedEventArgs e)
@@ -371,7 +363,7 @@ namespace ROZeroLoginer
                     }
                     catch (Exception ex)
                     {
-                        System.Diagnostics.Debug.WriteLine($"Failed to save account {account.Name}: {ex.Message}");
+                        Debug.WriteLine($"Failed to save account {account.Name}: {ex.Message}");
                         errorCount++;
                     }
                 }
@@ -418,21 +410,6 @@ namespace ROZeroLoginer
             }
         }
 
-        private void DeleteAccountButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedAccount == null) return;
-
-            var result = MessageBox.Show($"確定要刪除帳號 '{_selectedAccount.Name}' 嗎？",
-                "確認刪除", MessageBoxButton.YesNo, MessageBoxImage.Question);
-
-            if (result == MessageBoxResult.Yes)
-            {
-                _dataService.DeleteAccount(_selectedAccount.Id);
-                LoadAccounts();
-                LoadGroupTabs();
-                StatusTextBlock.Text = "刪除帳號成功";
-            }
-        }
 
         private void SettingsButton_Click(object sender, RoutedEventArgs e)
         {
@@ -468,22 +445,7 @@ namespace ROZeroLoginer
             }
         }
 
-        private void TestTotpButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (_selectedAccount == null) return;
 
-            try
-            {
-                var totp = _totpGenerator.GenerateTotpWithTiming(_selectedAccount.OtpSecret);
-                var remaining = _totpGenerator.GetTimeRemaining();
-
-                MessageBox.Show($"TOTP: {totp}\n剩餘時間: {remaining} 秒", "TOTP 測試", MessageBoxButton.OK, MessageBoxImage.Information);
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"生成 TOTP 時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
-        }
 
         private void CopyTotpButton_Click(object sender, RoutedEventArgs e)
         {
@@ -493,6 +455,108 @@ namespace ROZeroLoginer
                 StatusTextBlock.Text = "TOTP 已複製到剪貼簿";
             }
         }
+
+        private async void CheckForUpdatesOnStartup()
+        {
+            try
+            {
+                LogService.Instance.Info("開始自動檢查更新");
+                var updateService = new Services.UpdateService();
+                var updateInfo = await updateService.CheckForUpdatesAsync();
+
+                if (updateInfo != null && updateInfo.IsNewVersion)
+                {
+                    _hasNewVersion = true;
+                    UpdateCheckUpdateButtonAppearance();
+                    LogService.Instance.Info("發現新版本: {0}", updateInfo.Version);
+                }
+                else
+                {
+                    LogService.Instance.Info("已是最新版本");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Warning("自動檢查更新失敗: {0}", ex.Message);
+            }
+        }
+
+        private void UpdateCheckUpdateButtonAppearance()
+        {
+            if (_hasNewVersion)
+            {
+                CheckUpdateButton.Content = "🔴 有新版本";
+                CheckUpdateButton.ToolTip = "發現新版本，點擊查看詳情";
+            }
+            else
+            {
+                CheckUpdateButton.Content = "檢查更新";
+                CheckUpdateButton.ToolTip = null;
+            }
+        }
+
+        private async void CheckUpdateButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                StatusTextBlock.Text = "正在檢查更新...";
+                CheckUpdateButton.IsEnabled = false;
+
+                var updateService = new Services.UpdateService();
+                var updateInfo = await updateService.CheckForUpdatesAsync();
+
+                if (updateInfo == null)
+                {
+                    StatusTextBlock.Text = "檢查更新失敗";
+                    MessageBox.Show("無法檢查更新，請檢查網路連線或稍後再試。", "檢查更新",
+                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return;
+                }
+
+                if (updateInfo.IsNewVersion)
+                {
+                    _hasNewVersion = true;
+                    UpdateCheckUpdateButtonAppearance();
+                    StatusTextBlock.Text = $"發現新版本: {updateInfo.Version}";
+
+                    var result = MessageBox.Show(
+                        $"發現新版本！\n\n" +
+                        $"目前版本: v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3)}\n" +
+                        $"最新版本: {updateInfo.Version}\n" +
+                        $"發布日期: {updateInfo.PublishDate:yyyy-MM-dd}\n\n" +
+                        $"更新說明:\n{updateInfo.ReleaseNotes}\n\n" +
+                        $"是否要前往下載頁面？",
+                        "發現新版本",
+                        MessageBoxButton.YesNo,
+                        MessageBoxImage.Information);
+
+                    if (result == MessageBoxResult.Yes)
+                    {
+                        updateService.OpenDownloadPage(updateInfo.DownloadUrl);
+                    }
+                }
+                else
+                {
+                    _hasNewVersion = false;
+                    UpdateCheckUpdateButtonAppearance();
+                    StatusTextBlock.Text = "已是最新版本";
+                    MessageBox.Show($"目前已是最新版本 ({updateInfo.Version})", "檢查更新",
+                        MessageBoxButton.OK, MessageBoxImage.Information);
+                }
+            }
+            catch (Exception ex)
+            {
+                StatusTextBlock.Text = "檢查更新出錯";
+                LogService.Instance.Error(ex, "檢查更新時發生錯誤");
+                MessageBox.Show($"檢查更新時發生錯誤: {ex.Message}", "錯誤",
+                    MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+            finally
+            {
+                CheckUpdateButton.IsEnabled = true;
+            }
+        }
+
 
         private void AboutButton_Click(object sender, RoutedEventArgs e)
         {
@@ -545,42 +609,26 @@ namespace ROZeroLoginer
 
         private void SelectAllButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DisplayAccounts != null)
-            {
-                foreach (var item in DisplayAccounts)
-                {
-                    item.IsSelected = true;
-                }
-                UpdateLaunchSelectedButtonState();
-            }
+            AccountsDataGrid.SelectAll();
         }
 
         private void SelectNoneButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DisplayAccounts != null)
-            {
-                foreach (var item in DisplayAccounts)
-                {
-                    item.IsSelected = false;
-                }
-                UpdateLaunchSelectedButtonState();
-            }
+            AccountsDataGrid.UnselectAll();
         }
 
         private void LaunchSelectedButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DisplayAccounts == null) return;
-
-            var selectedAccounts = DisplayAccounts
-                .Where(item => item.IsSelected)
-                .Select(item => item.Account)
-                .ToList();
-
-            if (selectedAccounts.Count == 0)
+            if (AccountsDataGrid.SelectedItems.Count == 0)
             {
                 MessageBox.Show("請選擇要啟動的帳號", "批次啟動", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
+
+            var selectedAccounts = AccountsDataGrid.SelectedItems
+                .Cast<AccountDisplayItem>()
+                .Select(item => item.Account)
+                .ToList();
 
             var result = MessageBox.Show(
                 $"確定要啟動選中的 {selectedAccounts.Count} 個帳號嗎？",
@@ -590,30 +638,31 @@ namespace ROZeroLoginer
 
             if (result == MessageBoxResult.Yes)
             {
+                // 縮小視窗到工作列
+                this.WindowState = WindowState.Minimized;
+
                 Task.Run(() => BatchLaunchGames(selectedAccounts));
             }
         }
 
         private void DeleteSelectedButton_Click(object sender, RoutedEventArgs e)
         {
-            if (DisplayAccounts == null) return;
-
-            var selectedAccounts = DisplayAccounts
-                .Where(item => item.IsSelected)
-                .Select(item => item.Account)
-                .ToList();
-
-            if (selectedAccounts.Count == 0)
+            if (AccountsDataGrid.SelectedItems.Count == 0)
             {
                 MessageBox.Show("請選擇要刪除的帳號", "批次刪除", MessageBoxButton.OK, MessageBoxImage.Information);
                 return;
             }
 
+            var selectedAccounts = AccountsDataGrid.SelectedItems
+                .Cast<AccountDisplayItem>()
+                .Select(item => item.Account)
+                .ToList();
+
             var result = MessageBox.Show(
                 $"確定要刪除選中的 {selectedAccounts.Count} 個帳號嗎？\n\n" +
-                "此操作無法復原！", 
-                "批次刪除確認", 
-                MessageBoxButton.YesNo, 
+                "此操作無法復原！",
+                "批次刪除確認",
+                MessageBoxButton.YesNo,
                 MessageBoxImage.Warning);
 
             if (result == MessageBoxResult.Yes)
@@ -637,7 +686,7 @@ namespace ROZeroLoginer
 
                 LoadAccounts();
                 LoadGroupTabs();
-                
+
                 if (errorCount == 0)
                 {
                     StatusTextBlock.Text = $"批次刪除成功：{successCount} 個帳號";
@@ -645,7 +694,7 @@ namespace ROZeroLoginer
                 else
                 {
                     StatusTextBlock.Text = $"批次刪除完成：{successCount} 個成功，{errorCount} 個失敗";
-                    MessageBox.Show($"部分帳號刪除失敗\n成功：{successCount} 個\n失敗：{errorCount} 個", 
+                    MessageBox.Show($"部分帳號刪除失敗\n成功：{successCount} 個\n失敗：{errorCount} 個",
                                   "批次刪除結果", MessageBoxButton.OK, MessageBoxImage.Warning);
                 }
             }
@@ -701,6 +750,10 @@ namespace ROZeroLoginer
 
         private async void BatchLaunchGames(List<Account> selectedAccounts)
         {
+            // 清除已登入視窗記錄，確保批次啟動時有乾淨的狀態
+            InputService.ClearLoggedInWindows();
+            LogService.Instance.Info("[BatchLaunch] 已清除已登入視窗記錄，開始批次啟動 {0} 個帳號", selectedAccounts.Count);
+
             var successCount = 0;
             var failCount = 0;
 
@@ -772,14 +825,36 @@ namespace ROZeroLoginer
                 throw new Exception("無法啟動遊戲進程");
             }
 
-            // 等待一下遊戲啟動
-            System.Threading.Thread.Sleep(3000);
+            LogService.Instance.Info("[BatchLaunch] 遊戲啟動成功 - PID: {0}, 帳號: {1}", gameProcess.Id, account.Username);
 
-            // 執行自動輸入帳號密碼（在背景執行緒中，但需要處理 UI 更新）
-            var inputService = new InputService();
-            var totp = _totpGenerator.GenerateTotpWithTiming(account.OtpSecret);
+            // 主動等待遊戲視窗出現，最多等待 30 秒
+            LogService.Instance.Info("[BatchLaunch] 開始等待 PID {0} 的遊戲視窗出現 - {1}", gameProcess.Id, account.Username);
+            var gameWindow = InputService.WaitForRoWindowByPid(gameProcess.Id, 30000, 500);
 
-            inputService.SendLogin(account.Username, account.Password, totp, settings.OtpInputDelayMs, settings);
+            if (gameWindow == IntPtr.Zero)
+            {
+                throw new Exception($"等待遊戲視窗出現超時 (PID: {gameProcess.Id})");
+            }
+
+            LogService.Instance.Info("[BatchLaunch] 遊戲視窗已出現，準備執行登入操作 - PID: {0}, 視窗: {1}, 帳號: {2}",
+                gameProcess.Id, gameWindow.ToInt64(), account.Username);
+
+            // 執行自動輸入帳號密碼（必須在主 UI 線程中執行以獲得輸入權限）
+            System.Windows.Application.Current.Dispatcher.Invoke(() =>
+            {
+                try
+                {
+                    LogService.Instance.Info("[BatchLaunch] 在主線程中開始執行輸入操作 - {0}", account.Username);
+                    var inputService = new InputService();
+                    inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, false, gameProcess.Id);
+                    LogService.Instance.Info("[BatchLaunch] 輸入操作完成 - {0}", account.Username);
+                }
+                catch (Exception ex)
+                {
+                    LogService.Instance.Error("[BatchLaunch] 批次啟動輸入失敗 - {0}: {1}", account.Username, ex.Message);
+                    throw; // 重新拋出異常以便上層處理
+                }
+            });
 
             _dataService.UpdateAccountLastUsed(account.Id);
         }
@@ -793,7 +868,7 @@ namespace ROZeroLoginer
             {
                 // 重新建立 DataService 以確保載入新的金鑰和資料
                 _dataService = new DataService();
-                
+
                 // 強制當前 DataService 重新載入（雙重保險）
                 _dataService.ForceReload();
 
@@ -821,8 +896,6 @@ namespace ROZeroLoginer
 
                 // 更新按鈕狀態
                 EditAccountButton.IsEnabled = false;
-                DeleteAccountButton.IsEnabled = false;
-                TestTotpButton.IsEnabled = false;
                 CopyTotpButton.IsEnabled = false;
                 UpdateLaunchSelectedButtonState();
 
@@ -838,8 +911,10 @@ namespace ROZeroLoginer
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
+            LogService.Instance.Info("程序準備關閉");
             _totpTimer?.Stop();
             _hotkeyService?.UnregisterAllHotkeys();
+            LogService.Instance.Info("=== ROZero Loginer 已關閉 ===");
         }
     }
 }

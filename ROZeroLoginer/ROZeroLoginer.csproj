@@ -94,6 +94,10 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Windows\LogViewerWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Windows\SettingsWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -107,7 +111,9 @@
     <Compile Include="Services\GameResolutionService.cs" />
     <Compile Include="Services\GlobalHotkeyService.cs" />
     <Compile Include="Services\InputService.cs" />
+    <Compile Include="Services\LogService.cs" />
     <Compile Include="Services\LowLevelKeyboardHookService.cs" />
+    <Compile Include="Services\UpdateService.cs" />
     <Compile Include="Services\WindowValidationService.cs" />
     <Compile Include="Utils\TotpGenerator.cs" />
     <Compile Include="Utils\PrivacyConverter.cs" />
@@ -122,6 +128,9 @@
     </Compile>
     <Compile Include="Windows\BatchEditWindow.xaml.cs">
       <DependentUpon>BatchEditWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\LogViewerWindow.xaml.cs">
+      <DependentUpon>LogViewerWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\SettingsWindow.xaml.cs">
       <DependentUpon>SettingsWindow.xaml</DependentUpon>
