@@ -24,7 +24,7 @@ namespace ROZeroLoginer.Services
     public class InputService
     {
         private readonly GameResolutionService _resolutionService;
-        
+
         // 記錄已經登入的視窗句柄，避免重複使用
         private static readonly HashSet<IntPtr> _loggedInWindows = new HashSet<IntPtr>();
         private static readonly object _loggedInWindowsLock = new object();
@@ -81,25 +81,25 @@ namespace ROZeroLoginer.Services
         public static IntPtr WaitForRoWindowByPid(int targetPid, int timeoutMs = 30000, int checkIntervalMs = 500)
         {
             LogService.Instance.Info("[WaitForRoWindow] 開始等待 PID {0} 的 RO 視窗出現，超時時間: {1}ms", targetPid, timeoutMs);
-            
+
             var startTime = Environment.TickCount;
             var checkCount = 0;
-            
+
             while (Environment.TickCount - startTime < timeoutMs)
             {
                 checkCount++;
                 LogService.Instance.Debug("[WaitForRoWindow] 第 {0} 次檢查 PID {1} 的視窗", checkCount, targetPid);
-                
+
                 try
                 {
                     var availableWindows = new List<IntPtr>();
-                    
+
                     EnumWindows((hWnd, lParam) =>
                     {
                         try
                         {
                             GetWindowThreadProcessId(hWnd, out uint processId);
-                            
+
                             if (processId == targetPid)
                             {
                                 if (!IsWindowVisible(hWnd))
@@ -107,18 +107,18 @@ namespace ROZeroLoginer.Services
                                     LogService.Instance.Debug("[WaitForRoWindow] 跳過不可見的 PID {0} 視窗: {1}", targetPid, hWnd.ToInt64());
                                     return true;
                                 }
-                                
+
                                 var titleBuilder = new StringBuilder(256);
                                 int titleLength = GetWindowText(hWnd, titleBuilder, titleBuilder.Capacity);
                                 var title = titleBuilder.ToString();
-                                
+
                                 LogService.Instance.Debug("[WaitForRoWindow] PID {0} 視窗 {1} 標題: '{2}'", targetPid, hWnd.ToInt64(), title);
-                                
+
                                 if (title == "Ragnarok : Zero")
                                 {
                                     bool isLoggedIn = IsWindowLoggedIn(hWnd);
                                     LogService.Instance.Debug("[WaitForRoWindow] 找到符合的視窗 {0}，已登入狀態: {1}", hWnd.ToInt64(), isLoggedIn);
-                                    
+
                                     if (!isLoggedIn)
                                     {
                                         availableWindows.Add(hWnd);
@@ -130,14 +130,14 @@ namespace ROZeroLoginer.Services
                         {
                             LogService.Instance.Debug("[WaitForRoWindow] 檢查視窗 {0} 時發生錯誤: {1}", hWnd.ToInt64(), ex.Message);
                         }
-                        
+
                         return true;
                     }, IntPtr.Zero);
-                    
+
                     if (availableWindows.Count > 0)
                     {
                         var foundWindow = availableWindows.First();
-                        LogService.Instance.Info("[WaitForRoWindow] 成功找到 PID {0} 的 RO 視窗: {1}，等待時間: {2}ms", 
+                        LogService.Instance.Info("[WaitForRoWindow] 成功找到 PID {0} 的 RO 視窗: {1}，等待時間: {2}ms",
                             targetPid, foundWindow.ToInt64(), Environment.TickCount - startTime);
                         return foundWindow;
                     }
@@ -146,10 +146,10 @@ namespace ROZeroLoginer.Services
                 {
                     LogService.Instance.Warning("[WaitForRoWindow] 第 {0} 次檢查時發生錯誤: {1}", checkCount, ex.Message);
                 }
-                
+
                 Thread.Sleep(checkIntervalMs);
             }
-            
+
             LogService.Instance.Warning("[WaitForRoWindow] 等待 PID {0} 的 RO 視窗超時，總檢查次數: {1}", targetPid, checkCount);
             return IntPtr.Zero;
         }
@@ -296,41 +296,42 @@ namespace ROZeroLoginer.Services
 
             // 根據 PID 精確尋找視窗，如果沒有提供 PID 則使用通用方法
             IntPtr targetWindow = IntPtr.Zero;
-            
+            bool isBatchLaunch = targetProcessId > 0; // 批次啟動會提供PID，單個登入不會
+
             try
             {
                 if (targetProcessId > 0)
                 {
-                    LogService.Instance.Info("[SendLogin] 使用PID {0} 查找RO視窗", targetProcessId);
+                    LogService.Instance.Info("[SendLogin] 使用PID {0} 查找RO視窗 (批次啟動模式)", targetProcessId);
                     targetWindow = FindRagnarokWindowByPid(targetProcessId);
                     LogService.Instance.Debug("[SendLogin] 根據PID {0} 查找視窗結果: {1}", targetProcessId, targetWindow);
-                    
+
                     // 如果PID方法失敗，嘗試通用方法作為備份
                     if (targetWindow == IntPtr.Zero)
                     {
                         LogService.Instance.Warning("[SendLogin] PID方法失敗，嘗試通用方法作為備份");
-                        targetWindow = FindRagnarokWindow();
+                        targetWindow = FindRagnarokWindow(true); // 批次模式，需要避開已登入視窗
                         LogService.Instance.Debug("[SendLogin] 備份通用方法查找結果: {0}", targetWindow);
                     }
                 }
                 else
                 {
-                    LogService.Instance.Info("[SendLogin] 使用通用方法查找RO視窗");
-                    targetWindow = FindRagnarokWindow();
+                    LogService.Instance.Info("[SendLogin] 使用通用方法查找RO視窗 (單個登入模式)");
+                    targetWindow = FindRagnarokWindow(false); // 單個登入模式，不需要避開已登入視窗
                     LogService.Instance.Debug("[SendLogin] 使用通用方法查找視窗結果: {0}", targetWindow);
                 }
             }
             catch (Exception findEx)
             {
                 LogService.Instance.Error("[SendLogin] 查找視窗時發生異常: {0}", findEx.ToString());
-                
+
                 // 嘗試最後的備用方法
                 if (targetProcessId > 0)
                 {
                     LogService.Instance.Info("[SendLogin] 嘗試最後的備用方法");
                     try
                     {
-                        targetWindow = FindRagnarokWindow();
+                        targetWindow = FindRagnarokWindow(true); // 批次模式備份
                         LogService.Instance.Debug("[SendLogin] 備用方法結果: {0}", targetWindow);
                     }
                     catch (Exception backupEx)
@@ -338,7 +339,7 @@ namespace ROZeroLoginer.Services
                         LogService.Instance.Error("[SendLogin] 備用方法也失敗: {0}", backupEx.Message);
                     }
                 }
-                
+
                 if (targetWindow == IntPtr.Zero)
                 {
                     throw; // 重新拋出原異常
@@ -347,10 +348,10 @@ namespace ROZeroLoginer.Services
 
             if (targetWindow == IntPtr.Zero)
             {
-                string errorMsg = targetProcessId > 0 
+                string errorMsg = targetProcessId > 0
                     ? $"未找到 PID {targetProcessId} 對應的 Ragnarok Online 遊戲視窗！請確認遊戲已經啟動且進程正確。"
                     : "未找到 Ragnarok Online 遊戲視窗！請確認遊戲已經啟動。";
-                    
+
                 LogService.Instance.Error("[SendLogin] {0}", errorMsg);
                 throw new InvalidOperationException(errorMsg);
             }
@@ -420,7 +421,7 @@ namespace ROZeroLoginer.Services
             // 檢查視窗焦點並按下 ENTER 鍵
             CheckRagnarokWindowFocus(targetProcessId);
             SendKey(Keys.Enter);
-            
+
             // 標記視窗為已登入，避免重複使用
             MarkWindowAsLoggedIn(targetWindow);
             LogService.Instance.Info("[SendLogin] 登入流程完成，已標記視窗 {0} 為已登入狀態", targetWindow);
@@ -596,10 +597,11 @@ namespace ROZeroLoginer.Services
         /// <summary>
         /// 查找可用的 Ragnarok Online 視窗 - 只匹配標題為 "Ragnarok : Zero" 且未登入的視窗
         /// </summary>
-        private IntPtr FindRagnarokWindow()
+        private IntPtr FindRagnarokWindow(bool useBatchTracking = false)
         {
-            LogService.Instance.Info("[FindRagnarokWindow] 開始查找可用的 RO 視窗");
-            
+            string mode = useBatchTracking ? "批次啟動" : "單個登入";
+            LogService.Instance.Info("[FindRagnarokWindow] 開始查找可用的 RO 視窗 ({0} 模式)", mode);
+
             var availableWindows = new List<(IntPtr handle, bool isLoggedIn)>();
             int totalRoWindows = 0;
 
@@ -622,15 +624,18 @@ namespace ROZeroLoginer.Services
                         return true;
 
                     string title = windowTitle.ToString();
-                    
+
                     // 嚴格匹配標題為 "Ragnarok : Zero"
                     if (title == "Ragnarok : Zero")
                     {
                         totalRoWindows++;
-                        bool isLoggedIn = IsWindowLoggedIn(hWnd);
+                        
+                        // 只在批次啟動模式下檢查登入狀態
+                        bool isLoggedIn = useBatchTracking ? IsWindowLoggedIn(hWnd) : false;
                         availableWindows.Add((hWnd, isLoggedIn));
                         
-                        LogService.Instance.Debug("[FindRagnarokWindow] 發現 RO 視窗: {0}, 已登入: {1}", hWnd, isLoggedIn);
+                        LogService.Instance.Debug("[FindRagnarokWindow] 發現 RO 視窗: {0}, 已登入檢查: {1}, 結果: {2}", 
+                            hWnd, useBatchTracking ? "是" : "否", isLoggedIn);
                     }
                 }
                 catch (Exception ex)
@@ -641,28 +646,46 @@ namespace ROZeroLoginer.Services
                 return true; // 繼續枚舉
             }, IntPtr.Zero);
 
-            LogService.Instance.Info("[FindRagnarokWindow] 找到 {0} 個 RO 視窗，其中 {1} 個可用", 
-                totalRoWindows, availableWindows.Count(w => !w.isLoggedIn));
-
-            // 優先返回未登入的視窗
-            var availableWindow = availableWindows.FirstOrDefault(w => !w.isLoggedIn);
-            if (availableWindow.handle != IntPtr.Zero)
+            if (useBatchTracking)
             {
-                LogService.Instance.Info("[FindRagnarokWindow] 選擇未登入的視窗: {0}", availableWindow.handle);
-                return availableWindow.handle;
-            }
+                LogService.Instance.Info("[FindRagnarokWindow] 找到 {0} 個 RO 視窗，其中 {1} 個可用",
+                    totalRoWindows, availableWindows.Count(w => !w.isLoggedIn));
 
-            // 如果沒有未登入的視窗，記錄警告但不返回已登入的
-            if (availableWindows.Any())
-            {
-                LogService.Instance.Warning("[FindRagnarokWindow] 所有 RO 視窗都已登入，無可用視窗");
+                // 批次啟動模式：優先返回未登入的視窗
+                var availableWindow = availableWindows.FirstOrDefault(w => !w.isLoggedIn);
+                if (availableWindow.handle != IntPtr.Zero)
+                {
+                    LogService.Instance.Info("[FindRagnarokWindow] 選擇未登入的視窗: {0}", availableWindow.handle);
+                    return availableWindow.handle;
+                }
+
+                // 如果沒有未登入的視窗，記錄警告但不返回已登入的
+                if (availableWindows.Any())
+                {
+                    LogService.Instance.Warning("[FindRagnarokWindow] 所有 RO 視窗都已登入，無可用視窗");
+                }
+                else
+                {
+                    LogService.Instance.Warning("[FindRagnarokWindow] 未找到任何 RO 視窗");
+                }
+
+                return IntPtr.Zero;
             }
             else
             {
-                LogService.Instance.Warning("[FindRagnarokWindow] 未找到任何 RO 視窗");
-            }
+                LogService.Instance.Info("[FindRagnarokWindow] 找到 {0} 個 RO 視窗，單個登入模式返回第一個", totalRoWindows);
 
-            return IntPtr.Zero;
+                // 單個登入模式：直接返回第一個找到的視窗
+                var firstWindow = availableWindows.FirstOrDefault();
+                if (firstWindow.handle != IntPtr.Zero)
+                {
+                    LogService.Instance.Info("[FindRagnarokWindow] 選擇第一個 RO 視窗: {0}", firstWindow.handle);
+                    return firstWindow.handle;
+                }
+
+                LogService.Instance.Warning("[FindRagnarokWindow] 未找到任何 RO 視窗");
+                return IntPtr.Zero;
+            }
         }
 
         /// <summary>
@@ -671,7 +694,7 @@ namespace ROZeroLoginer.Services
         private IntPtr FindRagnarokWindowByPid(int targetPid)
         {
             LogService.Instance.Info("[FindRagnarokWindowByPid] 開始根據 PID {0} 查找 RO 視窗", targetPid);
-            
+
             IntPtr foundWindow = IntPtr.Zero;
             int totalWindows = 0;
 
@@ -682,11 +705,11 @@ namespace ROZeroLoginer.Services
                     try
                     {
                         totalWindows++;
-                        
+
                         // 獲取視窗的進程 ID
                         uint processId = 0;
                         uint threadId = GetWindowThreadProcessId(hWnd, out processId);
-                        
+
                         if (threadId == 0 || processId == 0)
                             return true; // 繼續枚舉
 
@@ -720,7 +743,7 @@ namespace ROZeroLoginer.Services
                         {
                             LogService.Instance.Warning("[FindRagnarokWindowByPid] 獲取視窗標題失敗: {0}", titleEx.Message);
                         }
-                        
+
                         LogService.Instance.Debug("[FindRagnarokWindowByPid] PID {0} 視窗: {1}, 標題: '{2}'", targetPid, hWnd, title);
 
                         // 嚴格匹配標題為 "Ragnarok : Zero"
@@ -744,9 +767,9 @@ namespace ROZeroLoginer.Services
                 LogService.Instance.Error("[FindRagnarokWindowByPid] EnumWindows 調用失敗: {0}", enumEx.ToString());
             }
 
-            LogService.Instance.Info("[FindRagnarokWindowByPid] PID {0} 查找完成，檢查了 {1} 個視窗，結果: {2}", 
+            LogService.Instance.Info("[FindRagnarokWindowByPid] PID {0} 查找完成，檢查了 {1} 個視窗，結果: {2}",
                 targetPid, totalWindows, foundWindow);
-                
+
             return foundWindow;
         }
 
@@ -1172,12 +1195,85 @@ namespace ROZeroLoginer.Services
                 LogService.Instance.Debug("[IsCurrentWindowRagnarok] 前台視窗PID: {0}, 目標PID: {1}, 匹配: {2}", processId, targetProcessId, pidMatch);
                 return pidMatch;
             }
-            
-            // 沒有指定 PID 時使用原有邏輯
-            var roWindow = FindRagnarokWindow();
-            bool windowMatch = currentWindow == roWindow && roWindow != IntPtr.Zero;
-            LogService.Instance.Debug("[IsCurrentWindowRagnarok] 前台視窗: {0}, RO視窗: {1}, 匹配: {2}", currentWindow, roWindow, windowMatch);
-            return windowMatch;
+
+            // 沒有指定 PID 時使用增強的檢測邏輯
+            return IsRagnarokWindow(currentWindow);
+        }
+
+        private string GetWindowTitle(IntPtr windowHandle)
+        {
+            if (windowHandle == IntPtr.Zero)
+                return string.Empty;
+
+            try
+            {
+                int length = GetWindowTextLength(windowHandle);
+                if (length <= 0)
+                    return string.Empty;
+
+                var titleBuilder = new StringBuilder(length + 1);
+                int actualLength = GetWindowText(windowHandle, titleBuilder, titleBuilder.Capacity);
+                return actualLength > 0 ? titleBuilder.ToString() : string.Empty;
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Debug("[GetWindowTitle] 取得視窗標題時發生錯誤: {0}", ex.Message);
+                return string.Empty;
+            }
+        }
+
+        private bool IsRagnarokWindow(IntPtr windowHandle)
+        {
+            if (windowHandle == IntPtr.Zero)
+                return false;
+
+            try
+            {
+                // 檢查視窗標題是否為 "Ragnarok : Zero"
+                var title = GetWindowTitle(windowHandle);
+                LogService.Instance.Debug("[IsRagnarokWindow] 檢查視窗標題: '{0}'", title);
+
+                if (string.IsNullOrEmpty(title))
+                    return false;
+
+                // 只檢查是否為 "Ragnarok : Zero"，如果不是則檢查進程名稱
+                if (title.Equals("Ragnarok : Zero", StringComparison.OrdinalIgnoreCase))
+                    return true;
+
+                // 如果標題不是 "Ragnarok : Zero"，但可能是已登入的RO視窗，檢查進程
+                return CheckProcessName(windowHandle);
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Error(ex, "[IsRagnarokWindow] 檢查視窗時發生錯誤");
+                return false;
+            }
+        }
+
+        private bool CheckProcessName(IntPtr windowHandle)
+        {
+            try
+            {
+                uint processId;
+                GetWindowThreadProcessId(windowHandle, out processId);
+
+                var process = System.Diagnostics.Process.GetProcessById((int)processId);
+                var processName = process.ProcessName.ToLowerInvariant();
+                var processPath = process.MainModule?.FileName?.ToLowerInvariant() ?? "";
+
+                LogService.Instance.Debug("[CheckProcessName] 進程名稱: '{0}', 路徑: '{1}'", processName, processPath);
+
+                // 檢查是否為 RO 相關的進程名稱
+                bool isRoProcess = processName.Contains("Ragnarok : Zero");
+
+                LogService.Instance.Debug("[CheckProcessName] RO進程檢測結果: {0}", isRoProcess);
+                return isRoProcess;
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Debug("[CheckProcessName] 檢查進程名稱時發生錯誤: {0}", ex.Message);
+                return false;
+            }
         }
 
         private void CheckRagnarokWindowFocus(int targetProcessId = 0)
