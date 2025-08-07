@@ -1,5 +1,7 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Threading;
 
 namespace ROZeroLoginer.Services
@@ -20,6 +22,9 @@ namespace ROZeroLoginer.Services
         private readonly string _logDirectory;
         private readonly string _currentLogFile;
         private readonly object _lockObject = new object();
+
+        // 事件通知日誌更新
+        public event EventHandler LogUpdated;
 
         private LogService()
         {
@@ -104,6 +109,9 @@ namespace ROZeroLoginer.Services
 
                 // 同時輸出到 Debug 控制台
                 System.Diagnostics.Debug.WriteLine(logEntry);
+
+                // 觸發日誌更新事件
+                LogUpdated?.Invoke(this, EventArgs.Empty);
             }
             catch (Exception ex)
             {
@@ -188,6 +196,28 @@ namespace ROZeroLoginer.Services
             catch (Exception ex)
             {
                 return $"讀取日誌失敗: {ex.Message}";
+            }
+        }
+
+        public List<string> GetRecentLogs(int maxLines = 50)
+        {
+            try
+            {
+                if (!File.Exists(_currentLogFile))
+                    return new List<string> { "日誌文件不存在" };
+
+                var lines = File.ReadAllLines(_currentLogFile);
+                var startIndex = Math.Max(0, lines.Length - maxLines);
+                var recentLines = new List<string>();
+                for (int i = startIndex; i < lines.Length; i++)
+                {
+                    recentLines.Add(lines[i]);
+                }
+                return recentLines;
+            }
+            catch (Exception ex)
+            {
+                return new List<string> { $"讀取日誌失敗: {ex.Message}" };
             }
         }
     }

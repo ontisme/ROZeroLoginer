@@ -456,6 +456,19 @@ namespace ROZeroLoginer
             }
         }
 
+        private void ViewLogButton_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                var logViewer = new LogViewerWindow();
+                logViewer.Show();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"開啟日誌檢視器時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
         private async void CheckForUpdatesOnStartup()
         {
             try
@@ -908,6 +921,7 @@ namespace ROZeroLoginer
                 MessageBox.Show($"重新載入資料時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
+
 
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {

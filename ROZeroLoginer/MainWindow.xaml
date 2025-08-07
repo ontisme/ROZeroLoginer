@@ -28,6 +28,7 @@
                 <Button Name="BatchEditButton" Content="批次編輯" Style="{StaticResource SecondaryButtonStyle}" Click="BatchEditButton_Click"/>
                 <Separator Margin="8,0"/>
                 <Button Name="SettingsButton" Content="設定" Style="{StaticResource SecondaryButtonStyle}" Click="SettingsButton_Click"/>
+                <Button Name="ViewLogButton" Content="查看日誌" Style="{StaticResource SecondaryButtonStyle}" Click="ViewLogButton_Click"/>
                 <Button Name="CheckUpdateButton" Content="檢查更新" Style="{StaticResource SecondaryButtonStyle}" Click="CheckUpdateButton_Click"/>
                 <Separator Margin="8,0"/>
                 <Button Name="AboutButton" Content="關於" Style="{StaticResource SecondaryButtonStyle}" Click="AboutButton_Click"/>
