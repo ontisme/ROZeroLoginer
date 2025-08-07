@@ -14,14 +14,14 @@ namespace ROZeroLoginer.Windows
     public partial class BatchEditWindow : Window
     {
         private readonly DataService _dataService;
-        private readonly TotpGenerator _totpGenerator;
+        private readonly OtpService _otpService;
         private readonly ObservableCollection<SelectableAccount> _accounts = new ObservableCollection<SelectableAccount>();
 
         public BatchEditWindow(DataService dataService)
         {
             InitializeComponent();
             _dataService = dataService;
-            _totpGenerator = new TotpGenerator();
+            _otpService = new OtpService();
             
             LoadAccounts();
             LoadGroups();
@@ -176,7 +176,7 @@ namespace ROZeroLoginer.Windows
             {
                 try
                 {
-                    _totpGenerator.GenerateTotp(OtpSecretTextBox.Text.Trim());
+                    _otpService.GenerateTotp(OtpSecretTextBox.Text.Trim());
                 }
                 catch (Exception ex)
                 {

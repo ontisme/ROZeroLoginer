@@ -11,7 +11,7 @@ namespace ROZeroLoginer.Windows
 {
     public partial class AccountWindow : Window
     {
-        private readonly TotpGenerator _totpGenerator;
+        private readonly OtpService _otpService;
         private DispatcherTimer _previewTimer;
         private Account _account;
 
@@ -21,7 +21,7 @@ namespace ROZeroLoginer.Windows
         {
             InitializeComponent();
             
-            _totpGenerator = new TotpGenerator();
+            _otpService = new OtpService();
             _account = account ?? new Account();
             
             InitializePreviewTimer();
@@ -96,8 +96,8 @@ namespace ROZeroLoginer.Windows
             {
                 try
                 {
-                    var totp = _totpGenerator.GenerateTotp(OtpSecretTextBox.Text);
-                    var remaining = _totpGenerator.GetTimeRemaining();
+                    var totp = _otpService.GenerateTotp(OtpSecretTextBox.Text);
+                    var remaining = _otpService.GetTimeRemaining();
                     
                     PreviewTotpTextBox.Text = totp;
                     PreviewCountdownTextBlock.Text = $"({remaining}s)";
@@ -174,7 +174,7 @@ namespace ROZeroLoginer.Windows
             // 驗證 OTP Secret Key 是否有效
             try
             {
-                _totpGenerator.GenerateTotp(OtpSecretTextBox.Text.Trim());
+                _otpService.GenerateTotp(OtpSecretTextBox.Text.Trim());
             }
             catch (Exception ex)
             {

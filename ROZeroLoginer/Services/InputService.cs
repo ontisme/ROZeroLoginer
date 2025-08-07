@@ -629,12 +629,12 @@ namespace ROZeroLoginer.Services
                     if (title == "Ragnarok : Zero")
                     {
                         totalRoWindows++;
-                        
+
                         // 只在批次啟動模式下檢查登入狀態
                         bool isLoggedIn = useBatchTracking ? IsWindowLoggedIn(hWnd) : false;
                         availableWindows.Add((hWnd, isLoggedIn));
-                        
-                        LogService.Instance.Debug("[FindRagnarokWindow] 發現 RO 視窗: {0}, 已登入檢查: {1}, 結果: {2}", 
+
+                        LogService.Instance.Debug("[FindRagnarokWindow] 發現 RO 視窗: {0}, 已登入檢查: {1}, 結果: {2}",
                             hWnd, useBatchTracking ? "是" : "否", isLoggedIn);
                     }
                 }
@@ -1312,19 +1312,19 @@ namespace ROZeroLoginer.Services
 
         private string WaitForValidOtpTime(string otpSecret, int targetProcessId = 0)
         {
-            var totpGenerator = new TotpGenerator();
+            var otpService = new OtpService();
 
             while (true)
             {
-                var remainingTime = totpGenerator.GetTimeRemaining();
+                var remainingTime = otpService.GetTimeRemaining();
 
-                // 如果剩餘時間大於等於 5 秒，直接生成並返回 OTP
-                if (remainingTime >= 5)
+                // 如果剩餘時間大於等於 2 秒，直接生成並返回 OTP
+                if (remainingTime >= 2)
                 {
-                    return totpGenerator.GenerateTotpWithTiming(otpSecret);
+                    return otpService.GenerateTotpWithTiming(otpSecret);
                 }
 
-                // 如果剩餘時間小於 5 秒，等待到下一個周期
+                // 如果剩餘時間小於 2 秒，等待到下一個周期
                 LogService.Instance.Info("[WaitForValidOtpTime] OTP 剩餘時間不足（{0}秒），等待下一個周期...", remainingTime);
 
                 // 等待到下一個 30 秒周期 + 1 秒緩衝

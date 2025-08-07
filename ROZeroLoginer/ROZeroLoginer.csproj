@@ -113,9 +113,9 @@
     <Compile Include="Services\InputService.cs" />
     <Compile Include="Services\LogService.cs" />
     <Compile Include="Services\LowLevelKeyboardHookService.cs" />
+    <Compile Include="Services\OtpService.cs" />
     <Compile Include="Services\UpdateService.cs" />
     <Compile Include="Services\WindowValidationService.cs" />
-    <Compile Include="Utils\TotpGenerator.cs" />
     <Compile Include="Utils\PrivacyConverter.cs" />
     <Compile Include="Windows\AccountSelectionWindow.xaml.cs">
       <DependentUpon>AccountSelectionWindow.xaml</DependentUpon>
@@ -165,6 +165,7 @@
   <ItemGroup>
     <PackageReference Include="Newtonsoft.Json" Version="13.0.3" />
     <PackageReference Include="System.Drawing.Common" Version="7.0.0" />
+    <PackageReference Include="Otp.NET" Version="1.4.0" />
     <PackageReference Include="Costura.Fody" Version="5.7.0">
       <PrivateAssets>all</PrivateAssets>
       <IncludeAssets>runtime; build; native; contentfiles; analyzers</IncludeAssets>

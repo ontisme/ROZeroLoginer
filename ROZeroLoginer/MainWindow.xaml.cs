@@ -23,7 +23,7 @@ namespace ROZeroLoginer
     public partial class MainWindow : Window, INotifyPropertyChanged
     {
         private DataService _dataService;
-        private readonly TotpGenerator _totpGenerator;
+        private readonly OtpService _otpService;
         private readonly LowLevelKeyboardHookService _hotkeyService;
         private readonly WindowValidationService _windowValidationService;
         private DispatcherTimer _totpTimer;
@@ -74,7 +74,7 @@ namespace ROZeroLoginer
             LogService.Instance.Info("工作目錄: {0}", Environment.CurrentDirectory);
 
             _dataService = new DataService();
-            _totpGenerator = new TotpGenerator();
+            _otpService = new OtpService();
             _hotkeyService = new LowLevelKeyboardHookService();
             _windowValidationService = new WindowValidationService();
 
@@ -294,8 +294,8 @@ namespace ROZeroLoginer
             {
                 try
                 {
-                    var totp = _totpGenerator.GenerateTotp(_selectedAccount.OtpSecret);
-                    var remaining = _totpGenerator.GetTimeRemaining();
+                    var totp = _otpService.GenerateTotp(_selectedAccount.OtpSecret);
+                    var remaining = _otpService.GetTimeRemaining();
 
                     TotpTextBox.Text = totp;
                     TotpCountdownTextBlock.Text = $"({remaining}s)";

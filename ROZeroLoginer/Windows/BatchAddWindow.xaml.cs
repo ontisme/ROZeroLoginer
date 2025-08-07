@@ -12,14 +12,14 @@ namespace ROZeroLoginer.Windows
     public partial class BatchAddWindow : Window
     {
         private List<Account> _parsedAccounts = new List<Account>();
-        private readonly TotpGenerator _totpGenerator;
+        private readonly OtpService _otpService;
 
         public List<Account> ImportedAccounts => _parsedAccounts;
 
         public BatchAddWindow()
         {
             InitializeComponent();
-            _totpGenerator = new TotpGenerator();
+            _otpService = new OtpService();
             LoadExistingGroups();
         }
 
@@ -120,7 +120,7 @@ namespace ROZeroLoginer.Windows
                     // 驗證 TOTP 密鑰
                     try
                     {
-                        _totpGenerator.GenerateTotp(otpSecret);
+                        _otpService.GenerateTotp(otpSecret);
                     }
                     catch
                     {
