@@ -13,6 +13,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -29,7 +31,13 @@
         <TextBlock Grid.Row="6" Text="分組:" FontWeight="Bold" Margin="0,5"/>
         <ComboBox Grid.Row="7" Name="GroupComboBox" Margin="0,5" Height="25" IsEditable="True" Style="{StaticResource ModernComboBoxStyle}"/>
 
-        <GroupBox Grid.Row="8" Header="OTP Secret Key" Margin="0,10">
+        <TextBlock Grid.Row="8" Text="伺服器:" FontWeight="Bold" Margin="0,5"/>
+        <ComboBox Grid.Row="9" Name="ServerComboBox" Margin="0,5" Height="25" Style="{StaticResource ModernComboBoxStyle}">
+            <ComboBoxItem Content="1號伺服器" Tag="1"/>
+            <ComboBoxItem Content="2號伺服器" Tag="2"/>
+        </ComboBox>
+
+        <GroupBox Grid.Row="10" Header="OTP Secret Key" Margin="0,10">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -53,7 +61,7 @@
             </Grid>
         </GroupBox>
 
-        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+        <StackPanel Grid.Row="11" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Name="OkButton" Content="確定" Style="{StaticResource ButtonStyle}" 
                     Width="80" Click="OkButton_Click" IsDefault="True"/>
             <Button Name="CancelButton" Content="取消" Style="{StaticResource ButtonStyle}" 

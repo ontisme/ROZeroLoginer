@@ -82,6 +82,7 @@ namespace ROZeroLoginer.Windows
                 PasswordBox.Password = _account.Password ?? "";
                 OtpSecretTextBox.Text = _account.OtpSecret ?? "";
                 GroupComboBox.Text = _account.Group ?? "預設";
+                ServerComboBox.SelectedIndex = _account.Server == 2 ? 1 : 0;
             }
         }
 
@@ -129,6 +130,7 @@ namespace ROZeroLoginer.Windows
                 _account.Password = PasswordBox.Password;
                 _account.OtpSecret = OtpSecretTextBox.Text.Trim();
                 _account.Group = string.IsNullOrWhiteSpace(GroupComboBox.Text) ? "預設" : GroupComboBox.Text.Trim();
+                _account.Server = ServerComboBox.SelectedIndex == 1 ? 2 : 1;
                 
                 DialogResult = true;
                 Close();
