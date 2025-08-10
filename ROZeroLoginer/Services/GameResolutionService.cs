@@ -8,39 +8,39 @@ namespace ROZeroLoginer.Services
     {
         private int _width = 1024;
         private int _height = 768;
-        
+
         public int Width => _width;
         public int Height => _height;
-        
+
         public bool LoadResolutionFromConfig(string roGamePath)
         {
             try
             {
                 if (string.IsNullOrEmpty(roGamePath) || !File.Exists(roGamePath))
                     return false;
-                
+
                 var gameDirectory = Path.GetDirectoryName(roGamePath);
                 var optionInfoPath = Path.Combine(gameDirectory, "savedata", "OptionInfo.lua");
-                
+
                 if (!File.Exists(optionInfoPath))
                     return false;
-                
+
                 var content = File.ReadAllText(optionInfoPath);
-                
+
                 // Parse WIDTH
                 var widthMatch = Regex.Match(content, @"OptionInfoList\[""WIDTH""\]\s*=\s*(\d+)");
                 if (widthMatch.Success)
                 {
                     _width = int.Parse(widthMatch.Groups[1].Value);
                 }
-                
+
                 // Parse HEIGHT
                 var heightMatch = Regex.Match(content, @"OptionInfoList\[""HEIGHT""\]\s*=\s*(\d+)");
                 if (heightMatch.Success)
                 {
                     _height = int.Parse(heightMatch.Groups[1].Value);
                 }
-                
+
                 return true;
             }
             catch (Exception ex)
@@ -49,7 +49,7 @@ namespace ROZeroLoginer.Services
                 return false;
             }
         }
-        
+
         public (int x, int y) GetAgreeButtonPosition()
         {
             // 同意按鈕位置根據實際測試數據
@@ -57,9 +57,9 @@ namespace ROZeroLoginer.Services
             // 1600x900: (921, 583) - 57.56%, 64.78%
             // 1280x720: (763, 495) - 59.61%, 68.75%
             // 1024x768: (634, 518) - 61.91%, 67.45%
-            
+
             int x, y;
-            
+
             // 特定解析度的精確位置
             if (_width == 1920 && _height == 1080)
             {
@@ -81,14 +81,19 @@ namespace ROZeroLoginer.Services
                 x = 634;
                 y = 518;
             }
+            else if (_width == 800 && _height == 600)
+            {
+                x = 524;
+                y = 235;
+            }
             else
             {
                 // 對於其他解析度，使用線性插值
                 // 觀察到的規律：解析度越小，按鈕位置的比例越大
                 // 使用寬度作為基準進行插值
-                
+
                 double xRatio, yRatio;
-                
+
                 if (_width >= 1920)
                 {
                     xRatio = 0.5646;
@@ -121,23 +126,23 @@ namespace ROZeroLoginer.Services
                     xRatio = 0.62;
                     yRatio = 0.675;
                 }
-                
+
                 x = (int)(_width * xRatio);
                 y = (int)(_height * yRatio);
             }
-            
+
             return (x, y);
         }
-        
+
         public (int x, int y) GetLoginButtonPosition()
         {
             // 登入按鈕的位置計算
             double xRatio = 0.5;
             double yRatio = 0.65;
-            
+
             int x = (int)(_width * xRatio);
             int y = (int)(_height * yRatio);
-            
+
             return (x, y);
         }
     }
