@@ -290,7 +290,7 @@ namespace ROZeroLoginer.Services
             public int Bottom;
         }
 
-        public void SendLogin(string username, string password, string otpSecret, int otpDelayMs = 2000, AppSettings settings = null, bool skipAgreeButton = false, int targetProcessId = 0, int server = 1, int character = 1, int lastCharacter = 1)
+        public void SendLogin(string username, string password, string otpSecret, int otpDelayMs = 2000, AppSettings settings = null, bool skipAgreeButton = false, int targetProcessId = 0, int server = 1, int character = 1, int lastCharacter = 1, bool autoAssistBattle = false)
         {
             LogService.Instance.Info("[SendLogin] 開始登入流程 - 用戶: {0}, 跳過同意按鈕: {1}, 目標PID: {2}", username, skipAgreeButton, targetProcessId);
 
@@ -468,6 +468,13 @@ namespace ROZeroLoginer.Services
             }
 
             SendKey(Keys.Enter);
+
+            if (autoAssistBattle)
+            {
+                Thread.Sleep(500);
+                CheckRagnarokWindowFocus(targetProcessId);
+                SendKeyCombo(new[] { Keys.Menu, Keys.Oemplus });
+            }
 
             // 標記視窗為已登入，避免重複使用
             MarkWindowAsLoggedIn(targetWindow);
