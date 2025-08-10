@@ -55,6 +55,7 @@ namespace ROZeroLoginer.Services
                 existingAccount.Character = account.Character;
                 existingAccount.LastCharacter = account.LastCharacter;
                 existingAccount.AutoAssistBattle = account.AutoAssistBattle;
+                existingAccount.AutoAssistDelayMs = account.AutoAssistDelayMs;
                 existingAccount.LastUsed = account.LastUsed;
             }
             else
