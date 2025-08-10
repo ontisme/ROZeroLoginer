@@ -430,12 +430,15 @@ namespace ROZeroLoginer.Services
             CheckRagnarokWindowFocus(targetProcessId);
             SendKey(Keys.Enter);
 
-            // 選擇角色
+            // 選擇角色 (使用左右方向鍵)
             Thread.Sleep(500);
             CheckRagnarokWindowFocus(targetProcessId);
-            SendText(character.ToString());
-            Thread.Sleep(100);
-            CheckRagnarokWindowFocus(targetProcessId);
+            for (int i = 1; i < character; i++)
+            {
+                SendKey(Keys.Right);
+                Thread.Sleep(100);
+                CheckRagnarokWindowFocus(targetProcessId);
+            }
             SendKey(Keys.Enter);
 
             // 標記視窗為已登入，避免重複使用

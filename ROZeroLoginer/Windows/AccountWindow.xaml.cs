@@ -85,12 +85,22 @@ namespace ROZeroLoginer.Windows
                 GroupComboBox.Text = _account.Group ?? "預設";
                 ServerComboBox.SelectedIndex = _account.Server == 2 ? 1 : 0;
 
+                bool matched = false;
                 foreach (RadioButton rb in CharacterGrid.Children.OfType<RadioButton>())
                 {
                     if (rb.Tag != null && int.TryParse(rb.Tag.ToString(), out int tag) && tag == _account.Character)
                     {
                         rb.IsChecked = true;
+                        matched = true;
                         break;
+                    }
+                }
+                if (!matched)
+                {
+                    var firstRadio = CharacterGrid.Children.OfType<RadioButton>().FirstOrDefault();
+                    if (firstRadio != null)
+                    {
+                        firstRadio.IsChecked = true;
                     }
                 }
             }
