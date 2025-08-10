@@ -12,6 +12,7 @@ namespace ROZeroLoginer.Models
         private string _password;
         private string _otpSecret;
         private string _group;
+        private int _server = 1;
         private DateTime _createdAt;
         private DateTime _lastUsed;
 
@@ -75,6 +76,16 @@ namespace ROZeroLoginer.Models
             }
         }
 
+        public int Server
+        {
+            get => _server;
+            set
+            {
+                _server = value;
+                OnPropertyChanged();
+            }
+        }
+
         public DateTime CreatedAt
         {
             get => _createdAt;
@@ -102,12 +113,13 @@ namespace ROZeroLoginer.Models
             LastUsed = DateTime.MinValue;
         }
 
-        public Account(string name, string username, string password, string otpSecret, string group = "預設") : this()
+        public Account(string name, string username, string password, string otpSecret, int server = 1, string group = "預設") : this()
         {
             Name = name;
             Username = username;
             Password = password;
             OtpSecret = otpSecret;
+            Server = server;
             Group = group;
         }
 
