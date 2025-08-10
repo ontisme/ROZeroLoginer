@@ -91,6 +91,7 @@ namespace ROZeroLoginer.Windows
                         : 0;
 
                 AutoAssistCheckBox.IsChecked = _account.AutoAssistBattle;
+                AutoAssistDelayTextBox.Text = (_account.AutoAssistDelayMs / 1000).ToString();
             }
         }
 
@@ -145,6 +146,8 @@ namespace ROZeroLoginer.Windows
                     : 1;
 
                 _account.AutoAssistBattle = AutoAssistCheckBox.IsChecked == true;
+                int delaySec = int.TryParse(AutoAssistDelayTextBox.Text, out var ds) ? ds : 0;
+                _account.AutoAssistDelayMs = Math.Max(0, delaySec * 1000);
 
                 DialogResult = true;
                 Close();

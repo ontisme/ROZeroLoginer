@@ -49,7 +49,11 @@
             <ComboBoxItem Content="5" Tag="5"/>
         </ComboBox>
 
-        <CheckBox Grid.Row="12" Name="AutoAssistCheckBox" Content="自動開啟輔助戰鬥" Margin="0,5"/>
+        <StackPanel Grid.Row="12" Orientation="Horizontal" Margin="0,5">
+            <CheckBox Name="AutoAssistCheckBox" Content="自動開啟輔助戰鬥" VerticalAlignment="Center"/>
+            <TextBlock Text="延遲(秒):" Margin="10,0,0,0" VerticalAlignment="Center"/>
+            <TextBox Name="AutoAssistDelayTextBox" Width="50" Margin="5,0,0,0" Text="0"/>
+        </StackPanel>
 
         <GroupBox Grid.Row="13" Header="OTP Secret Key" Margin="0,10">
             <Grid>

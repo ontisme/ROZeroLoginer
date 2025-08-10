@@ -18,6 +18,7 @@ namespace ROZeroLoginer.Models
         private DateTime _createdAt;
         private DateTime _lastUsed;
         private bool _autoAssistBattle;
+        private int _autoAssistDelayMs;
 
         public string Id
         {
@@ -135,6 +136,16 @@ namespace ROZeroLoginer.Models
             set
             {
                 _autoAssistBattle = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int AutoAssistDelayMs
+        {
+            get => _autoAssistDelayMs;
+            set
+            {
+                _autoAssistDelayMs = value;
                 OnPropertyChanged();
             }
         }
