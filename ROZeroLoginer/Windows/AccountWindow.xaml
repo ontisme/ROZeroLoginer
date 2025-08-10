@@ -15,6 +15,8 @@
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
@@ -37,7 +39,16 @@
             <ComboBoxItem Content="Axl" Tag="2"/>
         </ComboBox>
 
-        <GroupBox Grid.Row="10" Header="OTP Secret Key" Margin="0,10">
+        <TextBlock Grid.Row="10" Text="角色:" FontWeight="Bold" Margin="0,5"/>
+        <UniformGrid Grid.Row="11" Name="CharacterGrid" Rows="1" Columns="5" Margin="0,5">
+            <RadioButton Content="1" GroupName="CharacterSlot" Tag="1" Margin="2"/>
+            <RadioButton Content="2" GroupName="CharacterSlot" Tag="2" Margin="2"/>
+            <RadioButton Content="3" GroupName="CharacterSlot" Tag="3" Margin="2"/>
+            <RadioButton Content="4" GroupName="CharacterSlot" Tag="4" Margin="2"/>
+            <RadioButton Content="5" GroupName="CharacterSlot" Tag="5" Margin="2"/>
+        </UniformGrid>
+
+        <GroupBox Grid.Row="12" Header="OTP Secret Key" Margin="0,10">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -61,7 +72,7 @@
             </Grid>
         </GroupBox>
 
-        <StackPanel Grid.Row="11" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+        <StackPanel Grid.Row="13" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Name="OkButton" Content="確定" Style="{StaticResource ButtonStyle}" 
                     Width="80" Click="OkButton_Click" IsDefault="True"/>
             <Button Name="CancelButton" Content="取消" Style="{StaticResource ButtonStyle}" 

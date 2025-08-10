@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using ROZeroLoginer.Models;
 using ROZeroLoginer.Services;
@@ -83,6 +84,25 @@ namespace ROZeroLoginer.Windows
                 OtpSecretTextBox.Text = _account.OtpSecret ?? "";
                 GroupComboBox.Text = _account.Group ?? "預設";
                 ServerComboBox.SelectedIndex = _account.Server == 2 ? 1 : 0;
+
+                bool matched = false;
+                foreach (RadioButton rb in CharacterGrid.Children.OfType<RadioButton>())
+                {
+                    if (rb.Tag != null && int.TryParse(rb.Tag.ToString(), out int tag) && tag == _account.Character)
+                    {
+                        rb.IsChecked = true;
+                        matched = true;
+                        break;
+                    }
+                }
+                if (!matched)
+                {
+                    var firstRadio = CharacterGrid.Children.OfType<RadioButton>().FirstOrDefault();
+                    if (firstRadio != null)
+                    {
+                        firstRadio.IsChecked = true;
+                    }
+                }
             }
         }
 
@@ -131,6 +151,9 @@ namespace ROZeroLoginer.Windows
                 _account.OtpSecret = OtpSecretTextBox.Text.Trim();
                 _account.Group = string.IsNullOrWhiteSpace(GroupComboBox.Text) ? "預設" : GroupComboBox.Text.Trim();
                 _account.Server = ServerComboBox.SelectedIndex == 1 ? 2 : 1;
+
+                var selectedRadio = CharacterGrid.Children.OfType<RadioButton>().FirstOrDefault(rb => rb.IsChecked == true);
+                _account.Character = selectedRadio != null && selectedRadio.Tag != null && int.TryParse(selectedRadio.Tag.ToString(), out int tag) ? tag : 1;
                 
                 DialogResult = true;
                 Close();

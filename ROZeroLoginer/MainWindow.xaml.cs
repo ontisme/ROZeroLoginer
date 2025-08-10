@@ -267,7 +267,7 @@ namespace ROZeroLoginer
                 var inputService = new InputService();
                 var settings = _dataService.GetSettings();
 
-                inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, skipAgreeButton, 0, account.Server);
+                inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, skipAgreeButton, 0, account.Server, account.Character);
 
                 _dataService.UpdateAccountLastUsed(account.Id);
 
@@ -868,7 +868,7 @@ namespace ROZeroLoginer
                 {
                     LogService.Instance.Info("[BatchLaunch] 在主線程中開始執行輸入操作 - {0}", account.Username);
                     var inputService = new InputService();
-                    inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, false, gameProcess.Id, account.Server);
+                    inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, false, gameProcess.Id, account.Server, account.Character);
                     LogService.Instance.Info("[BatchLaunch] 輸入操作完成 - {0}", account.Username);
                 }
                 catch (Exception ex)
