@@ -473,7 +473,9 @@ namespace ROZeroLoginer.Services
             {
                 Thread.Sleep(500 + autoAssistDelayMs);
                 CheckRagnarokWindowFocus(targetProcessId);
-                SendKeyCombo(new[] { Keys.Menu, Keys.Oemplus });
+                // 快捷鍵 x
+                SendKey(Keys.X);
+                LogService.Instance.Info("[SendLogin] 於 {0:HH:mm:ss.fff} 送出自動輔助戰鬥快捷鍵 X", DateTime.Now);
             }
 
             // 標記視窗為已登入，避免重複使用
