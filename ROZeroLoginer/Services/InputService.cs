@@ -426,9 +426,16 @@ namespace ROZeroLoginer.Services
             Thread.Sleep(500);
             CheckRagnarokWindowFocus(targetProcessId);
 
-            // 伺服器選擇畫面無法直接輸入數字，需以方向鍵移動
-            for (int i = 1; i < server; i++)
+            // 伺服器選擇畫面會記錄上次選擇，需以方向鍵確保選到正確伺服器
+            if (server == 1)
             {
+                // Sigrun 使用向上方向鍵
+                SendKey(Keys.Up);
+                Thread.Sleep(100);
+            }
+            else if (server == 2)
+            {
+                // Axl 使用向下方向鍵
                 SendKey(Keys.Down);
                 Thread.Sleep(100);
             }
