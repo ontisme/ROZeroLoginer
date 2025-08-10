@@ -14,6 +14,7 @@ namespace ROZeroLoginer.Models
         private string _group;
         private int _server = 1;
         private int _character = 1;
+        private int _lastCharacter = 1;
         private DateTime _createdAt;
         private DateTime _lastUsed;
 
@@ -93,6 +94,16 @@ namespace ROZeroLoginer.Models
             set
             {
                 _character = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int LastCharacter
+        {
+            get => _lastCharacter;
+            set
+            {
+                _lastCharacter = value;
                 OnPropertyChanged();
             }
         }
