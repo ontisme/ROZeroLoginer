@@ -33,8 +33,8 @@
 
         <TextBlock Grid.Row="8" Text="伺服器:" FontWeight="Bold" Margin="0,5"/>
         <ComboBox Grid.Row="9" Name="ServerComboBox" Margin="0,5" Height="25" Style="{StaticResource ModernComboBoxStyle}">
-            <ComboBoxItem Content="1號伺服器" Tag="1"/>
-            <ComboBoxItem Content="2號伺服器" Tag="2"/>
+            <ComboBoxItem Content="Sigrun" Tag="1"/>
+            <ComboBoxItem Content="Axl" Tag="2"/>
         </ComboBox>
 
         <GroupBox Grid.Row="10" Header="OTP Secret Key" Margin="0,10">
