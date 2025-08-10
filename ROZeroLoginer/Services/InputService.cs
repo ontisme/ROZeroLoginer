@@ -425,8 +425,14 @@ namespace ROZeroLoginer.Services
             // 選擇伺服器
             Thread.Sleep(500);
             CheckRagnarokWindowFocus(targetProcessId);
-            SendText(server.ToString());
-            Thread.Sleep(100);
+
+            // 伺服器選擇畫面無法直接輸入數字，需以方向鍵移動
+            for (int i = 1; i < server; i++)
+            {
+                SendKey(Keys.Down);
+                Thread.Sleep(100);
+            }
+
             CheckRagnarokWindowFocus(targetProcessId);
             SendKey(Keys.Enter);
 
