@@ -51,6 +51,10 @@ namespace ROZeroLoginer.Services
                 existingAccount.Username = account.Username;
                 existingAccount.Password = account.Password;
                 existingAccount.OtpSecret = account.OtpSecret;
+                existingAccount.Server = account.Server;
+                existingAccount.Character = account.Character;
+                existingAccount.LastCharacter = account.LastCharacter;
+                existingAccount.LastUsed = account.LastUsed;
             }
             else
             {

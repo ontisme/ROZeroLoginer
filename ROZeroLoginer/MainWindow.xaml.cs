@@ -267,9 +267,11 @@ namespace ROZeroLoginer
                 var inputService = new InputService();
                 var settings = _dataService.GetSettings();
 
-                inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, skipAgreeButton);
+                inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, skipAgreeButton, 0, account.Server, account.Character, account.LastCharacter);
 
-                _dataService.UpdateAccountLastUsed(account.Id);
+                account.LastUsed = DateTime.Now;
+                account.LastCharacter = account.Character;
+                _dataService.SaveAccount(account);
 
                 // 在 UI 執行緒中更新帳號列表
                 Dispatcher.Invoke(() =>
@@ -868,7 +870,7 @@ namespace ROZeroLoginer
                 {
                     LogService.Instance.Info("[BatchLaunch] 在主線程中開始執行輸入操作 - {0}", account.Username);
                     var inputService = new InputService();
-                    inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, false, gameProcess.Id);
+                    inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, false, gameProcess.Id, account.Server, account.Character, account.LastCharacter);
                     LogService.Instance.Info("[BatchLaunch] 輸入操作完成 - {0}", account.Username);
                 }
                 catch (Exception ex)
@@ -878,7 +880,9 @@ namespace ROZeroLoginer
                 }
             });
 
-            _dataService.UpdateAccountLastUsed(account.Id);
+            account.LastUsed = DateTime.Now;
+            account.LastCharacter = account.Character;
+            _dataService.SaveAccount(account);
         }
 
 

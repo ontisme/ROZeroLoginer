@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
+using System.Windows.Controls;
 using System.Windows.Threading;
 using ROZeroLoginer.Models;
 using ROZeroLoginer.Services;
@@ -82,6 +83,12 @@ namespace ROZeroLoginer.Windows
                 PasswordBox.Password = _account.Password ?? "";
                 OtpSecretTextBox.Text = _account.OtpSecret ?? "";
                 GroupComboBox.Text = _account.Group ?? "預設";
+                ServerComboBox.SelectedIndex = _account.Server == 2 ? 1 : 0;
+
+                CharacterComboBox.SelectedIndex =
+                    _account.Character >= 1 && _account.Character <= 5
+                        ? _account.Character - 1
+                        : 0;
             }
         }
 
@@ -129,7 +136,12 @@ namespace ROZeroLoginer.Windows
                 _account.Password = PasswordBox.Password;
                 _account.OtpSecret = OtpSecretTextBox.Text.Trim();
                 _account.Group = string.IsNullOrWhiteSpace(GroupComboBox.Text) ? "預設" : GroupComboBox.Text.Trim();
-                
+                _account.Server = ServerComboBox.SelectedIndex == 1 ? 2 : 1;
+
+                _account.Character = CharacterComboBox.SelectedIndex >= 0
+                    ? CharacterComboBox.SelectedIndex + 1
+                    : 1;
+
                 DialogResult = true;
                 Close();
             }

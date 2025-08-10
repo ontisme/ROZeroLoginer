@@ -290,7 +290,7 @@ namespace ROZeroLoginer.Services
             public int Bottom;
         }
 
-        public void SendLogin(string username, string password, string otpSecret, int otpDelayMs = 2000, AppSettings settings = null, bool skipAgreeButton = false, int targetProcessId = 0)
+        public void SendLogin(string username, string password, string otpSecret, int otpDelayMs = 2000, AppSettings settings = null, bool skipAgreeButton = false, int targetProcessId = 0, int server = 1, int character = 1, int lastCharacter = 1)
         {
             LogService.Instance.Info("[SendLogin] 開始登入流程 - 用戶: {0}, 跳過同意按鈕: {1}, 目標PID: {2}", username, skipAgreeButton, targetProcessId);
 
@@ -420,6 +420,53 @@ namespace ROZeroLoginer.Services
 
             // 檢查視窗焦點並按下 ENTER 鍵
             CheckRagnarokWindowFocus(targetProcessId);
+            SendKey(Keys.Enter);
+
+            // 選擇伺服器
+            Thread.Sleep(500);
+            CheckRagnarokWindowFocus(targetProcessId);
+
+            // 伺服器選擇畫面會記錄上次選擇，需以方向鍵確保選到正確伺服器
+            if (server == 1)
+            {
+                // Sigrun 使用向上方向鍵
+                SendKey(Keys.Up);
+                Thread.Sleep(100);
+            }
+            else if (server == 2)
+            {
+                // Axl 使用向下方向鍵
+                SendKey(Keys.Down);
+                Thread.Sleep(100);
+            }
+
+            CheckRagnarokWindowFocus(targetProcessId);
+            SendKey(Keys.Enter);
+
+            // 選擇角色 (使用左右方向鍵)
+            Thread.Sleep(500);
+            CheckRagnarokWindowFocus(targetProcessId);
+
+            int diff = character - lastCharacter;
+            if (diff > 0)
+            {
+                for (int i = 0; i < diff; i++)
+                {
+                    SendKey(Keys.Right);
+                    Thread.Sleep(100);
+                    CheckRagnarokWindowFocus(targetProcessId);
+                }
+            }
+            else if (diff < 0)
+            {
+                for (int i = 0; i < -diff; i++)
+                {
+                    SendKey(Keys.Left);
+                    Thread.Sleep(100);
+                    CheckRagnarokWindowFocus(targetProcessId);
+                }
+            }
+
             SendKey(Keys.Enter);
 
             // 標記視窗為已登入，避免重複使用

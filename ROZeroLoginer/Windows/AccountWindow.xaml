@@ -1,10 +1,14 @@
 <Window x:Class="ROZeroLoginer.Windows.AccountWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="帳號設定" Height="589" Width="500" 
+        Title="帳號設定" Height="680" Width="520"
         WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
     <Grid Margin="20">
         <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
             <RowDefinition Height="Auto"/>
@@ -29,7 +33,22 @@
         <TextBlock Grid.Row="6" Text="分組:" FontWeight="Bold" Margin="0,5"/>
         <ComboBox Grid.Row="7" Name="GroupComboBox" Margin="0,5" Height="25" IsEditable="True" Style="{StaticResource ModernComboBoxStyle}"/>
 
-        <GroupBox Grid.Row="8" Header="OTP Secret Key" Margin="0,10">
+        <TextBlock Grid.Row="8" Text="伺服器:" FontWeight="Bold" Margin="0,5"/>
+        <ComboBox Grid.Row="9" Name="ServerComboBox" Margin="0,5" Height="25" Style="{StaticResource ModernComboBoxStyle}">
+            <ComboBoxItem Content="Sigrun" Tag="1"/>
+            <ComboBoxItem Content="Axl" Tag="2"/>
+        </ComboBox>
+
+        <TextBlock Grid.Row="10" Text="角色:" FontWeight="Bold" Margin="0,5"/>
+        <ComboBox Grid.Row="11" Name="CharacterComboBox" Margin="0,5" Height="25" Style="{StaticResource ModernComboBoxStyle}">
+            <ComboBoxItem Content="1" Tag="1"/>
+            <ComboBoxItem Content="2" Tag="2"/>
+            <ComboBoxItem Content="3" Tag="3"/>
+            <ComboBoxItem Content="4" Tag="4"/>
+            <ComboBoxItem Content="5" Tag="5"/>
+        </ComboBox>
+
+        <GroupBox Grid.Row="12" Header="OTP Secret Key" Margin="0,10">
             <Grid>
                 <Grid.RowDefinitions>
                     <RowDefinition Height="Auto"/>
@@ -53,7 +72,7 @@
             </Grid>
         </GroupBox>
 
-        <StackPanel Grid.Row="9" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+        <StackPanel Grid.Row="13" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Name="OkButton" Content="確定" Style="{StaticResource ButtonStyle}" 
                     Width="80" Click="OkButton_Click" IsDefault="True"/>
             <Button Name="CancelButton" Content="取消" Style="{StaticResource ButtonStyle}" 
