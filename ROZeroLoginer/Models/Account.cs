@@ -17,6 +17,7 @@ namespace ROZeroLoginer.Models
         private int _lastCharacter = 1;
         private DateTime _createdAt;
         private DateTime _lastUsed;
+        private bool _autoAssistBattle;
 
         public string Id
         {
@@ -124,6 +125,16 @@ namespace ROZeroLoginer.Models
             set
             {
                 _lastUsed = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool AutoAssistBattle
+        {
+            get => _autoAssistBattle;
+            set
+            {
+                _autoAssistBattle = value;
                 OnPropertyChanged();
             }
         }

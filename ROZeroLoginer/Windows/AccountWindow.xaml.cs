@@ -89,6 +89,8 @@ namespace ROZeroLoginer.Windows
                     _account.Character >= 1 && _account.Character <= 5
                         ? _account.Character - 1
                         : 0;
+
+                AutoAssistCheckBox.IsChecked = _account.AutoAssistBattle;
             }
         }
 
@@ -141,7 +143,9 @@ namespace ROZeroLoginer.Windows
                 _account.Character = CharacterComboBox.SelectedIndex >= 0
                     ? CharacterComboBox.SelectedIndex + 1
                     : 1;
-                
+
+                _account.AutoAssistBattle = AutoAssistCheckBox.IsChecked == true;
+
                 DialogResult = true;
                 Close();
             }
