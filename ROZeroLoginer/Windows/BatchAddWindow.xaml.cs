@@ -88,11 +88,11 @@ namespace ROZeroLoginer.Windows
                         continue;
 
                     var parts = trimmedLine.Split('|');
-                    if (parts.Length != 4 && parts.Length != 5)
+                    if (parts.Length < 4 || parts.Length > 9)
                     {
                         errorCount++;
                         resultBuilder.AppendLine($"❌ 格式錯誤: {trimmedLine}");
-                        resultBuilder.AppendLine($"   (需要4或5個欄位，實際找到 {parts.Length} 個)");
+                        resultBuilder.AppendLine($"   (需要4-9個欄位，實際找到 {parts.Length} 個)");
                         continue;
                     }
 
@@ -100,12 +100,60 @@ namespace ROZeroLoginer.Windows
                     var username = parts[1].Trim();
                     var password = parts[2].Trim();
                     var otpSecret = parts[3].Trim();
-                    var group = parts.Length == 5 ? parts[4].Trim() : DefaultGroupComboBox.Text?.Trim();
+                    var group = parts.Length >= 5 ? parts[4].Trim() : DefaultGroupComboBox.Text?.Trim();
+                    var server = 1;
+                    var character = 1;
+                    var autoSelectServer = false;
+                    var autoSelectCharacter = false;
 
                     // 如果分組為空，使用預設分組
                     if (string.IsNullOrEmpty(group))
                     {
                         group = "預設";
+                    }
+
+                    // 解析伺服器
+                    if (parts.Length >= 6 && !string.IsNullOrEmpty(parts[5].Trim()))
+                    {
+                        if (!int.TryParse(parts[5].Trim(), out server) || server < 0 || server > 4)
+                        {
+                            errorCount++;
+                            resultBuilder.AppendLine($"❌ 無效的伺服器值: {name} (伺服器必須為0-4)");
+                            continue;
+                        }
+                    }
+
+                    // 解析角色
+                    if (parts.Length >= 7 && !string.IsNullOrEmpty(parts[6].Trim()))
+                    {
+                        if (!int.TryParse(parts[6].Trim(), out character) || character < 0 || character > 15)
+                        {
+                            errorCount++;
+                            resultBuilder.AppendLine($"❌ 無效的角色值: {name} (角色必須為0-15)");
+                            continue;
+                        }
+                    }
+
+                    // 解析自動選擇伺服器
+                    if (parts.Length >= 8 && !string.IsNullOrEmpty(parts[7].Trim()))
+                    {
+                        if (!bool.TryParse(parts[7].Trim(), out autoSelectServer))
+                        {
+                            errorCount++;
+                            resultBuilder.AppendLine($"❌ 無效的自動選擇伺服器值: {name} (必須為true或false)");
+                            continue;
+                        }
+                    }
+
+                    // 解析自動選擇角色
+                    if (parts.Length >= 9 && !string.IsNullOrEmpty(parts[8].Trim()))
+                    {
+                        if (!bool.TryParse(parts[8].Trim(), out autoSelectCharacter))
+                        {
+                            errorCount++;
+                            resultBuilder.AppendLine($"❌ 無效的自動選擇角色值: {name} (必須為true或false)");
+                            continue;
+                        }
                     }
 
                     // 驗證欄位
@@ -146,13 +194,58 @@ namespace ROZeroLoginer.Windows
                         Password = password,
                         OtpSecret = otpSecret,
                         Group = group,
+                        Server = server,
+                        Character = character,
+                        LastCharacter = character,
+                        AutoSelectServer = autoSelectServer,
+                        AutoSelectCharacter = autoSelectCharacter,
                         CreatedAt = DateTime.Now,
                         LastUsed = DateTime.MinValue
                     };
 
                     _parsedAccounts.Add(account);
                     successCount++;
-                    resultBuilder.AppendLine($"✅ {name} ({username}) - {group}");
+                    string serverName;
+                    switch (server)
+                    {
+                        case 0:
+                            serverName = "遊戲預設位置";
+                            break;
+                        case 1:
+                            serverName = "1";
+                            break;
+                        case 2:
+                            serverName = "2";
+                            break;
+                        case 3:
+                            serverName = "3";
+                            break;
+                        case 4:
+                            serverName = "4";
+                            break;
+                        default:
+                            serverName = "未知";
+                            break;
+                    }
+                    
+                    string characterName;
+                    if (character == 0)
+                    {
+                        characterName = "遊戲預設位置";
+                    }
+                    else
+                    {
+                        characterName = character.ToString();
+                    }
+                    var autoSelectInfo = "";
+                    if (autoSelectServer || autoSelectCharacter)
+                    {
+                        var autoSelectParts = new List<string>();
+                        if (autoSelectServer) autoSelectParts.Add("自動選伺服器");
+                        if (autoSelectCharacter) autoSelectParts.Add("自動選角色");
+                        autoSelectInfo = $" ({string.Join(", ", autoSelectParts)})";
+                    }
+                    resultBuilder.AppendLine($"✅ {name} ({username}) - {group} - 伺服器{serverName} 角色{characterName}{autoSelectInfo}");
                 }
 
                 resultBuilder.AppendLine();

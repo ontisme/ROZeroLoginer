@@ -75,10 +75,10 @@ namespace ROZeroLoginer
 
             _dataService = new DataService();
             _otpService = new OtpService();
-            _hotkeyService = new LowLevelKeyboardHookService();
-            _windowValidationService = new WindowValidationService();
-
             CurrentSettings = _dataService.GetSettings();
+            
+            _hotkeyService = new LowLevelKeyboardHookService(_currentSettings);
+            _windowValidationService = new WindowValidationService(_currentSettings);
             DisplayAccounts = new ObservableCollection<AccountDisplayItem>();
             this.DataContext = this;
 
@@ -217,7 +217,7 @@ namespace ROZeroLoginer
         private void ShowAccountSelectionWindow()
         {
             // 檢查當前前台視窗是否為 RO 視窗（熱鍵模式限制）
-            var inputService = new InputService();
+            var inputService = new InputService(_currentSettings);
             if (!inputService.IsCurrentWindowRagnarok())
             {
                 // 當前視窗不是 RO 視窗時，不執行操作
@@ -264,13 +264,25 @@ namespace ROZeroLoginer
         {
             try
             {
-                var inputService = new InputService();
+                var inputService = new InputService(_currentSettings);
                 var settings = _dataService.GetSettings();
 
-                inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, skipAgreeButton, 0, account.Server, account.Character, account.LastCharacter);
+                var serverToUse = account.AutoSelectServer ? account.Server : 0;
+                var characterToUse = account.AutoSelectCharacter ? account.Character : 0;
+                var lastCharacterToUse = account.AutoSelectCharacter ? account.LastCharacter : 0;
+                
+                // 如果伺服器設為0（遊戲預設位置），則不執行自動選擇
+                var shouldAutoSelectServer = account.AutoSelectServer && account.Server > 0;
+                // 如果角色設為0（遊戲預設位置），則不執行自動選擇
+                var shouldAutoSelectCharacter = account.AutoSelectCharacter && account.Character > 0;
+                
+                inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, skipAgreeButton, 0, serverToUse, characterToUse, lastCharacterToUse, shouldAutoSelectServer, shouldAutoSelectCharacter);
 
                 account.LastUsed = DateTime.Now;
-                account.LastCharacter = account.Character;
+                if (account.AutoSelectCharacter)
+                {
+                    account.LastCharacter = account.Character;
+                }
                 _dataService.SaveAccount(account);
 
                 // 在 UI 執行緒中更新帳號列表
@@ -853,7 +865,7 @@ namespace ROZeroLoginer
 
             // 主動等待遊戲視窗出現，最多等待 30 秒
             LogService.Instance.Info("[BatchLaunch] 開始等待 PID {0} 的遊戲視窗出現 - {1}", gameProcess.Id, account.Username);
-            var gameWindow = InputService.WaitForRoWindowByPid(gameProcess.Id, 30000, 500);
+            var gameWindow = InputService.WaitForRoWindowByPid(gameProcess.Id, _currentSettings, 30000, 500);
 
             if (gameWindow == IntPtr.Zero)
             {
@@ -869,8 +881,18 @@ namespace ROZeroLoginer
                 try
                 {
                     LogService.Instance.Info("[BatchLaunch] 在主線程中開始執行輸入操作 - {0}", account.Username);
-                    var inputService = new InputService();
-                    inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, false, gameProcess.Id, account.Server, account.Character, account.LastCharacter);
+                    var inputService = new InputService(_currentSettings);
+                    
+                    var serverToUse = account.AutoSelectServer ? account.Server : 0;
+                    var characterToUse = account.AutoSelectCharacter ? account.Character : 0;
+                    var lastCharacterToUse = account.AutoSelectCharacter ? account.LastCharacter : 0;
+                    
+                    // 如果伺服器設為0（遊戲預設位置），則不執行自動選擇
+                    var shouldAutoSelectServer = account.AutoSelectServer && account.Server > 0;
+                    // 如果角色設為0（遊戲預設位置），則不執行自動選擇
+                    var shouldAutoSelectCharacter = account.AutoSelectCharacter && account.Character > 0;
+                    
+                    inputService.SendLogin(account.Username, account.Password, account.OtpSecret, settings.OtpInputDelayMs, settings, false, gameProcess.Id, serverToUse, characterToUse, lastCharacterToUse, shouldAutoSelectServer, shouldAutoSelectCharacter);
                     LogService.Instance.Info("[BatchLaunch] 輸入操作完成 - {0}", account.Username);
                 }
                 catch (Exception ex)
@@ -881,7 +903,10 @@ namespace ROZeroLoginer
             });
 
             account.LastUsed = DateTime.Now;
-            account.LastCharacter = account.Character;
+            if (account.AutoSelectCharacter)
+            {
+                account.LastCharacter = account.Character;
+            }
             _dataService.SaveAccount(account);
         }
 

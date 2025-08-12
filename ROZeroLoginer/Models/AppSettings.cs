@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Runtime.CompilerServices;
 using System.Windows.Forms;
@@ -19,6 +20,7 @@ namespace ROZeroLoginer.Models
         private bool _hidePasswords = true;
         private bool _hideSecretKeys = true;
         private string _roGamePath = @"C:\Gravity\RagnarokZero\Ragexe.exe";
+        private List<string> _gameTitles;
 
         public Keys Hotkey
         {
@@ -138,6 +140,25 @@ namespace ROZeroLoginer.Models
                 _roGamePath = value;
                 OnPropertyChanged();
             }
+        }
+
+        public List<string> GameTitles
+        {
+            get => _gameTitles ?? (_gameTitles = new List<string>());
+            set
+            {
+                _gameTitles = value ?? new List<string>();
+                OnPropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// 獲取有效的遊戲標題列表，如果為空則返回預設標題
+        /// </summary>
+        public List<string> GetEffectiveGameTitles()
+        {
+            var titles = GameTitles;
+            return titles.Count > 0 ? titles : new List<string> { "Ragnarok", "Ragnarok : Zero" };
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

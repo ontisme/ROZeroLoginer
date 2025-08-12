@@ -15,6 +15,8 @@ namespace ROZeroLoginer.Models
         private int _server = 1;
         private int _character = 1;
         private int _lastCharacter = 1;
+        private bool _autoSelectServer = false;
+        private bool _autoSelectCharacter = false;
         private DateTime _createdAt;
         private DateTime _lastUsed;
 
@@ -128,6 +130,26 @@ namespace ROZeroLoginer.Models
             }
         }
 
+        public bool AutoSelectServer
+        {
+            get => _autoSelectServer;
+            set
+            {
+                _autoSelectServer = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool AutoSelectCharacter
+        {
+            get => _autoSelectCharacter;
+            set
+            {
+                _autoSelectCharacter = value;
+                OnPropertyChanged();
+            }
+        }
+
         public Account()
         {
             Id = Guid.NewGuid().ToString();
@@ -135,7 +157,7 @@ namespace ROZeroLoginer.Models
             LastUsed = DateTime.MinValue;
         }
 
-        public Account(string name, string username, string password, string otpSecret, int server = 1, int character = 1, string group = "預設") : this()
+        public Account(string name, string username, string password, string otpSecret, int server = 1, int character = 1, string group = "預設", bool autoSelectServer = false, bool autoSelectCharacter = false) : this()
         {
             Name = name;
             Username = username;
@@ -144,6 +166,8 @@ namespace ROZeroLoginer.Models
             Server = server;
             Character = character;
             Group = group;
+            AutoSelectServer = autoSelectServer;
+            AutoSelectCharacter = autoSelectCharacter;
         }
 
         public event PropertyChangedEventHandler PropertyChanged;

@@ -18,12 +18,12 @@
                            Foreground="{StaticResource ForegroundBrush}" Margin="0,0,0,12"/>
                 <TextBlock Text="請按照以下格式輸入帳號資料，每行一個帳號：" 
                            Foreground="{StaticResource ForegroundBrush}" Margin="0,0,0,6" FontSize="14"/>
-                <TextBlock Text="名稱|帳號|密碼|密鑰|分組" FontFamily="Consolas" FontWeight="Bold" FontSize="14"
+                <TextBlock Text="名稱|帳號|密碼|密鑰|分組|伺服器|角色|自動選伺服器|自動選角色" FontFamily="Consolas" FontWeight="Bold" FontSize="14"
                            Foreground="{StaticResource PrimaryBrush}" Margin="0,0,0,10"/>
                 <TextBlock Text="範例：" Foreground="{StaticResource MutedForegroundBrush}" Margin="0,0,0,4" FontSize="13"/>
-                <TextBlock Text="主角|myaccount|mypassword|ABCD1234EFGH5678|主要" FontFamily="Consolas" FontSize="13"
+                <TextBlock Text="主角|myaccount|mypassword|ABCD1234EFGH5678|主要|1|1|true|true" FontFamily="Consolas" FontSize="13"
                            Foreground="{StaticResource MutedForegroundBrush}" Margin="0,0,0,6"/>
-                <TextBlock Text="小號|smallaccount|smallpass|EFGH5678ABCD1234|小號" FontFamily="Consolas" FontSize="13"
+                <TextBlock Text="小號|smallaccount|smallpass|EFGH5678ABCD1234|小號|2|3|false|true" FontFamily="Consolas" FontSize="13"
                            Foreground="{StaticResource MutedForegroundBrush}" Margin="0,0,0,6"/>
                 <StackPanel Orientation="Horizontal" Margin="0,10,0,6">
                     <TextBlock Text="預設分組：" VerticalAlignment="Center" Margin="0,0,10,0" FontSize="13"/>
@@ -31,7 +31,7 @@
                     <TextBlock Text="（當沒有指定分組時使用）" VerticalAlignment="Center" Margin="10,0,0,0" 
                                FontSize="11" Foreground="{StaticResource MutedForegroundBrush}"/>
                 </StackPanel>
-                <TextBlock Text="注意：每個欄位不能包含 | 符號，分組欄位為可選，可調整視窗大小以獲得更好的檢視體驗" FontSize="12" 
+                <TextBlock Text="注意：每個欄位不能包含 | 符號，分組及後續欄位為可選，伺服器:0=遊戲預設/1-4，角色:0=遊戲預設/1-15，自動選擇:true/false" FontSize="12" 
                            Foreground="{StaticResource MutedForegroundBrush}"/>
             </StackPanel>
         </Border>

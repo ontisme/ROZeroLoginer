@@ -83,12 +83,33 @@ namespace ROZeroLoginer.Windows
                 PasswordBox.Password = _account.Password ?? "";
                 OtpSecretTextBox.Text = _account.OtpSecret ?? "";
                 GroupComboBox.Text = _account.Group ?? "預設";
-                ServerComboBox.SelectedIndex = _account.Server == 2 ? 1 : 0;
+                // 設定伺服器選項：0=遊戲預設位置, 1-4=第一到四個伺服器
+                switch (_account.Server)
+                {
+                    case 0: ServerComboBox.SelectedIndex = 4; break; // 遊戲預設位置
+                    case 1: ServerComboBox.SelectedIndex = 0; break; // 第一個
+                    case 2: ServerComboBox.SelectedIndex = 1; break; // 第二個
+                    case 3: ServerComboBox.SelectedIndex = 2; break; // 第三個
+                    case 4: ServerComboBox.SelectedIndex = 3; break; // 第四個
+                    default: ServerComboBox.SelectedIndex = 4; break; // 預設為遊戲預設位置
+                }
 
-                CharacterComboBox.SelectedIndex =
-                    _account.Character >= 1 && _account.Character <= 5
-                        ? _account.Character - 1
-                        : 0;
+                // 設定角色選項：0=遊戲預設位置, 1-15=角色1到15
+                if (_account.Character == 0)
+                {
+                    CharacterComboBox.SelectedIndex = 15; // 遊戲預設位置
+                }
+                else if (_account.Character >= 1 && _account.Character <= 15)
+                {
+                    CharacterComboBox.SelectedIndex = _account.Character - 1; // 角色1-15
+                }
+                else
+                {
+                    CharacterComboBox.SelectedIndex = 15; // 預設為遊戲預設位置
+                }
+                
+                AutoSelectServerCheckBox.IsChecked = _account.AutoSelectServer;
+                AutoSelectCharacterCheckBox.IsChecked = _account.AutoSelectCharacter;
             }
         }
 
@@ -136,11 +157,33 @@ namespace ROZeroLoginer.Windows
                 _account.Password = PasswordBox.Password;
                 _account.OtpSecret = OtpSecretTextBox.Text.Trim();
                 _account.Group = string.IsNullOrWhiteSpace(GroupComboBox.Text) ? "預設" : GroupComboBox.Text.Trim();
-                _account.Server = ServerComboBox.SelectedIndex == 1 ? 2 : 1;
+                // 保存伺服器選項：0=遊戲預設位置, 1-4=第一到四個伺服器
+                switch (ServerComboBox.SelectedIndex)
+                {
+                    case 0: _account.Server = 1; break; // 第一個
+                    case 1: _account.Server = 2; break; // 第二個
+                    case 2: _account.Server = 3; break; // 第三個
+                    case 3: _account.Server = 4; break; // 第四個
+                    case 4: _account.Server = 0; break; // 遊戲預設位置
+                    default: _account.Server = 0; break; // 預設為遊戲預設位置
+                }
 
-                _account.Character = CharacterComboBox.SelectedIndex >= 0
-                    ? CharacterComboBox.SelectedIndex + 1
-                    : 1;
+                // 保存角色選項：0=遊戲預設位置, 1-15=角色1到15
+                if (CharacterComboBox.SelectedIndex == 15)
+                {
+                    _account.Character = 0; // 遊戲預設位置
+                }
+                else if (CharacterComboBox.SelectedIndex >= 0 && CharacterComboBox.SelectedIndex <= 14)
+                {
+                    _account.Character = CharacterComboBox.SelectedIndex + 1; // 角色1-15
+                }
+                else
+                {
+                    _account.Character = 0; // 預設為遊戲預設位置
+                }
+                
+                _account.AutoSelectServer = AutoSelectServerCheckBox.IsChecked ?? false;
+                _account.AutoSelectCharacter = AutoSelectCharacterCheckBox.IsChecked ?? false;
 
                 DialogResult = true;
                 Close();

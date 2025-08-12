@@ -2,6 +2,7 @@ using System;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Windows.Forms;
+using ROZeroLoginer.Models;
 
 namespace ROZeroLoginer.Services
 {
@@ -36,9 +37,9 @@ namespace ROZeroLoginer.Services
 
         private delegate IntPtr LowLevelKeyboardProc(int nCode, IntPtr wParam, IntPtr lParam);
 
-        public LowLevelKeyboardHookService()
+        public LowLevelKeyboardHookService(AppSettings settings = null)
         {
-            _windowValidationService = new WindowValidationService();
+            _windowValidationService = new WindowValidationService(settings);
         }
 
         public bool RegisterHotkey(Keys key, Action action)

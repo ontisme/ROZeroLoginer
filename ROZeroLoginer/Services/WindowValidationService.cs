@@ -1,12 +1,21 @@
 using System;
 using System.Diagnostics;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
+using ROZeroLoginer.Models;
 
 namespace ROZeroLoginer.Services
 {
     public class WindowValidationService
     {
+        private readonly AppSettings _settings;
+
+        public WindowValidationService(AppSettings settings = null)
+        {
+            _settings = settings ?? new AppSettings();
+        }
+
         [DllImport("user32.dll")]
         private static extern IntPtr GetForegroundWindow();
 
@@ -58,11 +67,19 @@ namespace ROZeroLoginer.Services
 
                 string title = windowTitle.ToString();
                 
-                // 檢查是否包含 "Ragnarok : Zero" 或其他可能的 RO 標題
-                return title.Contains("Ragnarok : Zero") || 
-                       title.Contains("Ragnarok Online") ||
-                       title.Contains("RO：仙境傳說") ||
-                       title.Contains("仙境傳說");
+                // 檢查是否匹配任何配置的遊戲標題（完全匹配）
+                bool exactMatch = _settings.GetEffectiveGameTitles().Any(gameTitle => title == gameTitle);
+                
+                // 如果沒有完全匹配，檢查是否包含其他可能的 RO 標題（向後兼容）
+                if (!exactMatch)
+                {
+                    return title.Contains("Ragnarok Online") ||
+                           title.Contains("RO：仙境傳說") ||
+                           title.Contains("仙境傳說") ||
+                           _settings.GetEffectiveGameTitles().Any(gameTitle => title.Contains(gameTitle));
+                }
+                
+                return exactMatch;
             }
             catch (Exception ex)
             {

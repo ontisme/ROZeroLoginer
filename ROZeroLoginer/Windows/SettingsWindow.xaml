@@ -136,6 +136,36 @@
                     </Grid>
                 </GroupBox>
 
+                <!-- 遊戲標題設定 -->
+                <GroupBox Header="遊戲標題設定" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="設定要識別的遊戲視窗標題 (完全匹配)：" 
+                                   Margin="0,5" FontWeight="SemiBold"/>
+
+                        <ListBox Name="GameTitlesListBox" Grid.Row="1" Height="100" Margin="0,5"
+                                 BorderBrush="LightGray" BorderThickness="1"/>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,5">
+                            <TextBox Name="NewGameTitleTextBox" Width="250" Height="32" Margin="0,0,5,0"
+                                     Text="" VerticalAlignment="Center"/>
+                            <Button Name="AddGameTitleButton" Content="新增" Style="{StaticResource ButtonStyle}" 
+                                    Width="60" Height="32" Click="AddGameTitleButton_Click" VerticalAlignment="Center"/>
+                            <Button Name="RemoveGameTitleButton" Content="移除" Style="{StaticResource ButtonStyle}" 
+                                    Width="60" Height="32" Click="RemoveGameTitleButton_Click" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="3" Text="注意：使用 == 進行完全匹配，不支援部分匹配 (Contains)" 
+                                   Foreground="Gray" FontSize="11" Margin="0,5"/>
+                    </Grid>
+                </GroupBox>
+
                 <!-- 安全設定 -->
                 <GroupBox Header="安全設定" Margin="0,0,0,10">
                     <Grid>

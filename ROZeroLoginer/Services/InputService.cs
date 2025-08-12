@@ -24,14 +24,32 @@ namespace ROZeroLoginer.Services
     public class InputService
     {
         private readonly GameResolutionService _resolutionService;
+        private readonly AppSettings _settings;
 
         // 記錄已經登入的視窗句柄，避免重複使用
         private static readonly HashSet<IntPtr> _loggedInWindows = new HashSet<IntPtr>();
         private static readonly object _loggedInWindowsLock = new object();
 
-        public InputService()
+        public InputService(AppSettings settings = null)
         {
             _resolutionService = new GameResolutionService();
+            _settings = settings ?? new AppSettings();
+        }
+
+        /// <summary>
+        /// 檢查標題是否匹配任何配置的遊戲標題（完全匹配）
+        /// </summary>
+        private bool IsGameTitle(string title)
+        {
+            return _settings.GetEffectiveGameTitles().Any(gameTitle => title == gameTitle);
+        }
+
+        /// <summary>
+        /// 檢查標題是否匹配任何配置的遊戲標題（完全匹配）- 靜態版本
+        /// </summary>
+        private static bool IsGameTitle(string title, AppSettings settings)
+        {
+            return settings?.GetEffectiveGameTitles()?.Any(gameTitle => title == gameTitle) ?? false;
         }
 
         /// <summary>
@@ -78,7 +96,7 @@ namespace ROZeroLoginer.Services
         /// <param name="timeoutMs">超時時間（毫秒），預設 30 秒</param>
         /// <param name="checkIntervalMs">檢查間隔（毫秒），預設 500 毫秒</param>
         /// <returns>找到的視窗句柄，如果超時則返回 IntPtr.Zero</returns>
-        public static IntPtr WaitForRoWindowByPid(int targetPid, int timeoutMs = 30000, int checkIntervalMs = 500)
+        public static IntPtr WaitForRoWindowByPid(int targetPid, AppSettings settings = null, int timeoutMs = 30000, int checkIntervalMs = 500)
         {
             LogService.Instance.Info("[WaitForRoWindow] 開始等待 PID {0} 的 RO 視窗出現，超時時間: {1}ms", targetPid, timeoutMs);
 
@@ -114,7 +132,7 @@ namespace ROZeroLoginer.Services
 
                                 LogService.Instance.Debug("[WaitForRoWindow] PID {0} 視窗 {1} 標題: '{2}'", targetPid, hWnd.ToInt64(), title);
 
-                                if (title == "Ragnarok : Zero")
+                                if (IsGameTitle(title, settings ?? new AppSettings()))
                                 {
                                     bool isLoggedIn = IsWindowLoggedIn(hWnd);
                                     LogService.Instance.Debug("[WaitForRoWindow] 找到符合的視窗 {0}，已登入狀態: {1}", hWnd.ToInt64(), isLoggedIn);
@@ -290,59 +308,102 @@ namespace ROZeroLoginer.Services
             public int Bottom;
         }
 
-        public void SendLogin(string username, string password, string otpSecret, int otpDelayMs = 2000, AppSettings settings = null, bool skipAgreeButton = false, int targetProcessId = 0, int server = 1, int character = 1, int lastCharacter = 1)
+        public void SendLogin(string username, string password, string otpSecret, int otpDelayMs = 2000, AppSettings settings = null, bool skipAgreeButton = false, int targetProcessId = 0, int server = 1, int character = 1, int lastCharacter = 1, bool autoSelectServer = true, bool autoSelectCharacter = true)
         {
             LogService.Instance.Info("[SendLogin] 開始登入流程 - 用戶: {0}, 跳過同意按鈕: {1}, 目標PID: {2}", username, skipAgreeButton, targetProcessId);
 
-            // 根據 PID 精確尋找視窗，如果沒有提供 PID 則使用通用方法
+            try
+            {
+                // 1. 查找目標遊戲視窗
+                var targetWindow = FindTargetWindow(targetProcessId);
+
+                // 2. 準備視窗環境
+                PrepareWindow(targetWindow, settings);
+
+                // 3. 處理同意按鈕（如果需要）
+                if (!skipAgreeButton)
+                {
+                    HandleAgreeButton(targetWindow, targetProcessId);
+                }
+
+                // 4. 輸入帳號密碼
+                InputCredentials(username, password, targetProcessId);
+
+                // 5. 輸入 OTP
+                InputOTP(otpSecret, otpDelayMs, targetProcessId);
+
+                // 6. 選擇伺服器
+                SelectServer(server, autoSelectServer, targetProcessId);
+
+                // 7. 選擇角色
+                SelectCharacter(character, lastCharacter, autoSelectCharacter, targetProcessId);
+
+                // 8. 完成登入
+                FinalizeLogin(targetWindow);
+
+                LogService.Instance.Info("[SendLogin] 登入流程完成");
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Error("[SendLogin] 登入流程發生錯誤: {0}", ex.Message);
+                throw;
+            }
+        }
+
+        #region 私有登入步驟方法
+
+        /// <summary>
+        /// 查找目標遊戲視窗
+        /// </summary>
+        private IntPtr FindTargetWindow(int targetProcessId)
+        {
             IntPtr targetWindow = IntPtr.Zero;
-            bool isBatchLaunch = targetProcessId > 0; // 批次啟動會提供PID，單個登入不會
 
             try
             {
                 if (targetProcessId > 0)
                 {
-                    LogService.Instance.Info("[SendLogin] 使用PID {0} 查找RO視窗 (批次啟動模式)", targetProcessId);
+                    LogService.Instance.Info("[FindTargetWindow] 使用PID {0} 查找RO視窗 (批次啟動模式)", targetProcessId);
                     targetWindow = FindRagnarokWindowByPid(targetProcessId);
-                    LogService.Instance.Debug("[SendLogin] 根據PID {0} 查找視窗結果: {1}", targetProcessId, targetWindow);
+                    LogService.Instance.Debug("[FindTargetWindow] 根據PID {0} 查找視窗結果: {1}", targetProcessId, targetWindow);
 
                     // 如果PID方法失敗，嘗試通用方法作為備份
                     if (targetWindow == IntPtr.Zero)
                     {
-                        LogService.Instance.Warning("[SendLogin] PID方法失敗，嘗試通用方法作為備份");
-                        targetWindow = FindRagnarokWindow(true); // 批次模式，需要避開已登入視窗
-                        LogService.Instance.Debug("[SendLogin] 備份通用方法查找結果: {0}", targetWindow);
+                        LogService.Instance.Warning("[FindTargetWindow] PID方法失敗，嘗試通用方法作為備份");
+                        targetWindow = FindRagnarokWindow(true);
+                        LogService.Instance.Debug("[FindTargetWindow] 備份通用方法查找結果: {0}", targetWindow);
                     }
                 }
                 else
                 {
-                    LogService.Instance.Info("[SendLogin] 使用通用方法查找RO視窗 (單個登入模式)");
-                    targetWindow = FindRagnarokWindow(false); // 單個登入模式，不需要避開已登入視窗
-                    LogService.Instance.Debug("[SendLogin] 使用通用方法查找視窗結果: {0}", targetWindow);
+                    LogService.Instance.Info("[FindTargetWindow] 使用通用方法查找RO視窗 (單個登入模式)");
+                    targetWindow = FindRagnarokWindow(false);
+                    LogService.Instance.Debug("[FindTargetWindow] 使用通用方法查找視窗結果: {0}", targetWindow);
                 }
             }
             catch (Exception findEx)
             {
-                LogService.Instance.Error("[SendLogin] 查找視窗時發生異常: {0}", findEx.ToString());
+                LogService.Instance.Error("[FindTargetWindow] 查找視窗時發生異常: {0}", findEx.ToString());
 
                 // 嘗試最後的備用方法
                 if (targetProcessId > 0)
                 {
-                    LogService.Instance.Info("[SendLogin] 嘗試最後的備用方法");
+                    LogService.Instance.Info("[FindTargetWindow] 嘗試最後的備用方法");
                     try
                     {
-                        targetWindow = FindRagnarokWindow(true); // 批次模式備份
-                        LogService.Instance.Debug("[SendLogin] 備用方法結果: {0}", targetWindow);
+                        targetWindow = FindRagnarokWindow(true);
+                        LogService.Instance.Debug("[FindTargetWindow] 備用方法結果: {0}", targetWindow);
                     }
                     catch (Exception backupEx)
                     {
-                        LogService.Instance.Error("[SendLogin] 備用方法也失敗: {0}", backupEx.Message);
+                        LogService.Instance.Error("[FindTargetWindow] 備用方法也失敗: {0}", backupEx.Message);
                     }
                 }
 
                 if (targetWindow == IntPtr.Zero)
                 {
-                    throw; // 重新拋出原異常
+                    throw;
                 }
             }
 
@@ -352,64 +413,87 @@ namespace ROZeroLoginer.Services
                     ? $"未找到 PID {targetProcessId} 對應的 Ragnarok Online 遊戲視窗！請確認遊戲已經啟動且進程正確。"
                     : "未找到 Ragnarok Online 遊戲視窗！請確認遊戲已經啟動。";
 
-                LogService.Instance.Error("[SendLogin] {0}", errorMsg);
+                LogService.Instance.Error("[FindTargetWindow] {0}", errorMsg);
                 throw new InvalidOperationException(errorMsg);
             }
 
-            LogService.Instance.Info("[SendLogin] 找到 RO 視窗: {0}", targetWindow);
+            LogService.Instance.Info("[FindTargetWindow] 找到 RO 視窗: {0}", targetWindow);
+            return targetWindow;
+        }
 
-            // 確保目標視窗在前台，並給予足夠時間切換
+        /// <summary>
+        /// 準備視窗環境（設為前台、載入解析度）
+        /// </summary>
+        private void PrepareWindow(IntPtr targetWindow, AppSettings settings)
+        {
+            // 確保目標視窗在前台
             bool setForegroundResult = SetForegroundWindow(targetWindow);
-            LogService.Instance.Debug("[SendLogin] SetForegroundWindow 結果: {0}", setForegroundResult);
-            Thread.Sleep(500); // 增加等待時間確保視窗完全切換
+            LogService.Instance.Debug("[PrepareWindow] SetForegroundWindow 結果: {0}", setForegroundResult);
+            Thread.Sleep(500);
 
             // 載入遊戲解析度設定
             if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
             {
                 _resolutionService.LoadResolutionFromConfig(settings.RoGamePath);
             }
+        }
 
-            // 只有在不跳過同意按鈕時才點擊
-            if (!skipAgreeButton)
-            {
-                LogService.Instance.Info("[SendLogin] 開始同意按鈕點擊流程");
+        /// <summary>
+        /// 處理同意按鈕
+        /// </summary>
+        private void HandleAgreeButton(IntPtr targetWindow, int targetProcessId)
+        {
+            LogService.Instance.Info("[HandleAgreeButton] 開始同意按鈕點擊流程");
 
-                // 根據解析度計算同意按鈕位置
-                var (agreeX, agreeY) = _resolutionService.GetAgreeButtonPosition();
-                LogService.Instance.Debug("[SendLogin] 同意按鈕位置: ({0}, {1})", agreeX, agreeY);
+            // 根據解析度計算同意按鈕位置
+            var (agreeX, agreeY) = _resolutionService.GetAgreeButtonPosition();
+            LogService.Instance.Debug("[HandleAgreeButton] 同意按鈕位置: ({0}, {1})", agreeX, agreeY);
 
-                // 檢查視窗焦點並點擊同意按鈕
-                CheckRagnarokWindowFocus(targetProcessId);
-                LogService.Instance.Debug("[SendLogin] 視窗焦點檢查通過，開始點擊同意按鈕");
-                ClickUsingMethod1(targetWindow, agreeX, agreeY);
-                Thread.Sleep(200);
-                LogService.Instance.Debug("[SendLogin] 同意按鈕點擊完成");
-            }
-            else
-            {
-                LogService.Instance.Debug("[SendLogin] 跳過同意按鈕點擊");
-            }
+            // 檢查視窗焦點並點擊同意按鈕
+            CheckRagnarokWindowFocus(targetProcessId);
+            LogService.Instance.Debug("[HandleAgreeButton] 視窗焦點檢查通過，開始點擊同意按鈕");
+            ClickUsingMethod1(targetWindow, agreeX, agreeY);
+            Thread.Sleep(200);
+            LogService.Instance.Debug("[HandleAgreeButton] 同意按鈕點擊完成");
+        }
 
-            // 檢查視窗焦點並輸入帳號
+        /// <summary>
+        /// 輸入帳號密碼
+        /// </summary>
+        private void InputCredentials(string username, string password, int targetProcessId)
+        {
+            LogService.Instance.Debug("[InputCredentials] 開始輸入帳號密碼");
+
+            // 輸入帳號
             CheckRagnarokWindowFocus(targetProcessId);
             SendText(username);
             Thread.Sleep(100);
 
-            // 檢查視窗焦點並按下 TAB 鍵
+            // 按下 TAB 鍵切換到密碼欄位
             CheckRagnarokWindowFocus(targetProcessId);
             SendKey(Keys.Tab);
             Thread.Sleep(100);
 
-            // 檢查視窗焦點並輸入密碼
+            // 輸入密碼
             CheckRagnarokWindowFocus(targetProcessId);
             SendText(password);
             Thread.Sleep(100);
 
-            // 檢查視窗焦點並按下 ENTER 鍵
+            // 按下 ENTER 鍵提交
             CheckRagnarokWindowFocus(targetProcessId);
             SendKey(Keys.Enter);
 
-            // 等待 OTP 視窗出現的延遲時間
+            LogService.Instance.Debug("[InputCredentials] 帳號密碼輸入完成");
+        }
+
+        /// <summary>
+        /// 輸入 OTP
+        /// </summary>
+        private void InputOTP(string otpSecret, int otpDelayMs, int targetProcessId)
+        {
+            LogService.Instance.Debug("[InputOTP] 開始 OTP 輸入流程");
+
+            // 等待 OTP 視窗出現
             Thread.Sleep(otpDelayMs);
 
             // 檢查並等待 OTP 時間充足再輸入
@@ -418,61 +502,127 @@ namespace ROZeroLoginer.Services
             SendText(finalOtp);
             Thread.Sleep(100);
 
-            // 檢查視窗焦點並按下 ENTER 鍵
+            // 按下 ENTER 鍵提交
             CheckRagnarokWindowFocus(targetProcessId);
             SendKey(Keys.Enter);
 
-            // 選擇伺服器
+            LogService.Instance.Debug("[InputOTP] OTP 輸入完成");
+        }
+
+        /// <summary>
+        /// 選擇伺服器
+        /// </summary>
+        private void SelectServer(int server, bool autoSelectServer, int targetProcessId)
+        {
+            LogService.Instance.Debug("[SelectServer] 開始伺服器選擇 - 伺服器: {0}, 自動選擇: {1}", server, autoSelectServer);
+
             Thread.Sleep(500);
             CheckRagnarokWindowFocus(targetProcessId);
 
-            // 伺服器選擇畫面會記錄上次選擇，需以方向鍵確保選到正確伺服器
-            if (server == 1)
+            if (autoSelectServer && server > 0)
             {
-                // Sigrun 使用向上方向鍵
-                SendKey(Keys.Up);
-                Thread.Sleep(100);
-            }
-            else if (server == 2)
-            {
-                // Axl 使用向下方向鍵
-                SendKey(Keys.Down);
-                Thread.Sleep(100);
-            }
+                LogService.Instance.Debug("[SelectServer] 執行伺服器選擇邏輯");
 
-            CheckRagnarokWindowFocus(targetProcessId);
-            SendKey(Keys.Enter);
-
-            // 選擇角色 (使用左右方向鍵)
-            Thread.Sleep(500);
-            CheckRagnarokWindowFocus(targetProcessId);
-
-            int diff = character - lastCharacter;
-            if (diff > 0)
-            {
-                for (int i = 0; i < diff; i++)
+                // 強制先往上四次回到第一個位置
+                for (int i = 0; i < 4; i++)
                 {
-                    SendKey(Keys.Right);
-                    Thread.Sleep(100);
-                    CheckRagnarokWindowFocus(targetProcessId);
+                    SendKey(Keys.Up);
+                    Thread.Sleep(50);
+                }
+
+                // 然後往下選擇指定的伺服器 (server-1 次，因為已經在第一個位置)
+                for (int i = 1; i < server; i++)
+                {
+                    SendKey(Keys.Down);
+                    Thread.Sleep(50);
                 }
             }
-            else if (diff < 0)
+            else
             {
-                for (int i = 0; i < -diff; i++)
+                LogService.Instance.Debug("[SelectServer] 跳過伺服器選擇 - server={0}, autoSelect={1}", server, autoSelectServer);
+            }
+
+            CheckRagnarokWindowFocus(targetProcessId);
+            SendKey(Keys.Enter);
+            
+            LogService.Instance.Debug("[SelectServer] 伺服器選擇完成");
+        }
+
+        /// <summary>
+        /// 選擇角色
+        /// </summary>
+        private void SelectCharacter(int character, int lastCharacter, bool autoSelectCharacter, int targetProcessId)
+        {
+            LogService.Instance.Debug("[SelectCharacter] 開始角色選擇 - 角色: {0}, 上次角色: {1}, 自動選擇: {2}", character, lastCharacter, autoSelectCharacter);
+
+            Thread.Sleep(500);
+            CheckRagnarokWindowFocus(targetProcessId);
+
+            if (autoSelectCharacter && character > 0)
+            {
+                LogService.Instance.Debug("[SelectCharacter] 執行角色選擇邏輯 - 目標角色: {0}", character);
+                
+                // 5x3 網格的絕對定位邏輯
+                // 角色排列：1-5第一排，6-10第二排，11-15第三排
+                
+                // 強制回到左上角 (角色1的位置)
+                for (int i = 0; i < 4; i++) // 最多往左4次
                 {
                     SendKey(Keys.Left);
-                    Thread.Sleep(100);
-                    CheckRagnarokWindowFocus(targetProcessId);
+                    Thread.Sleep(50);
                 }
+                
+                for (int i = 0; i < 2; i++) // 最多往上2次
+                {
+                    SendKey(Keys.Up);
+                    Thread.Sleep(50);
+                }
+                
+                // 計算目標位置
+                int targetRow = (character - 1) / 5; // 0=第一排, 1=第二排, 2=第三排
+                int targetCol = (character - 1) % 5; // 0-4 對應左到右的位置
+                
+                LogService.Instance.Debug("[SelectCharacter] 目標位置: 第{0}排, 第{1}列", targetRow + 1, targetCol + 1);
+                
+                // 移動到目標行
+                for (int i = 0; i < targetRow; i++)
+                {
+                    SendKey(Keys.Down);
+                    Thread.Sleep(50);
+                }
+                
+                // 移動到目標列
+                for (int i = 0; i < targetCol; i++)
+                {
+                    SendKey(Keys.Right);
+                    Thread.Sleep(50);
+                }
+                
+                LogService.Instance.Debug("[SelectCharacter] 已移動到角色{0}的位置", character);
+            }
+            else
+            {
+                LogService.Instance.Debug("[SelectCharacter] 跳過角色選擇 - character={0}, autoSelect={1}", character, autoSelectCharacter);
             }
 
             SendKey(Keys.Enter);
+            
+            LogService.Instance.Debug("[SelectCharacter] 角色選擇完成");
+        }
+
+        /// <summary>
+        /// 完成登入（標記視窗）
+        /// </summary>
+        private void FinalizeLogin(IntPtr targetWindow)
+        {
+            LogService.Instance.Debug("[FinalizeLogin] 開始完成登入流程");
 
             // 標記視窗為已登入，避免重複使用
             MarkWindowAsLoggedIn(targetWindow);
-            LogService.Instance.Info("[SendLogin] 登入流程完成，已標記視窗 {0} 為已登入狀態", targetWindow);
+            LogService.Instance.Info("[FinalizeLogin] 登入流程完成，已標記視窗 {0} 為已登入狀態", targetWindow);
         }
+
+        #endregion
 
         public void SendText(string text)
         {
@@ -642,7 +792,7 @@ namespace ROZeroLoginer.Services
         }
 
         /// <summary>
-        /// 查找可用的 Ragnarok Online 視窗 - 只匹配標題為 "Ragnarok : Zero" 且未登入的視窗
+        /// 查找可用的 Ragnarok Online 視窗 - 匹配配置的遊戲標題且未登入的視窗
         /// </summary>
         private IntPtr FindRagnarokWindow(bool useBatchTracking = false)
         {
@@ -672,8 +822,8 @@ namespace ROZeroLoginer.Services
 
                     string title = windowTitle.ToString();
 
-                    // 嚴格匹配標題為 "Ragnarok : Zero"
-                    if (title == "Ragnarok : Zero")
+                    // 檢查是否匹配任何配置的遊戲標題
+                    if (IsGameTitle(title))
                     {
                         totalRoWindows++;
 
@@ -753,7 +903,7 @@ namespace ROZeroLoginer.Services
         }
 
         /// <summary>
-        /// 根據 PID 查找 Ragnarok Online 視窗 - 只匹配標題為 "Ragnarok : Zero" 的視窗
+        /// 根據 PID 查找 Ragnarok Online 視窗 - 匹配配置的遊戲標題的視窗
         /// </summary>
         private IntPtr FindRagnarokWindowByPid(int targetPid)
         {
@@ -810,8 +960,8 @@ namespace ROZeroLoginer.Services
 
                         LogService.Instance.Debug("[FindRagnarokWindowByPid] PID {0} 視窗: {1}, 標題: '{2}'", targetPid, hWnd, title);
 
-                        // 嚴格匹配標題為 "Ragnarok : Zero"
-                        if (title == "Ragnarok : Zero")
+                        // 檢查是否匹配任何配置的遊戲標題
+                        if (IsGameTitle(title))
                         {
                             foundWindow = hWnd;
                             LogService.Instance.Info("[FindRagnarokWindowByPid] 找到 PID {0} 的 RO 視窗: {1}", targetPid, hWnd);
@@ -1293,18 +1443,18 @@ namespace ROZeroLoginer.Services
 
             try
             {
-                // 檢查視窗標題是否為 "Ragnarok : Zero"
+                // 檢查視窗標題是否匹配配置的遊戲標題
                 var title = GetWindowTitle(windowHandle);
                 LogService.Instance.Debug("[IsRagnarokWindow] 檢查視窗標題: '{0}'", title);
 
                 if (string.IsNullOrEmpty(title))
                     return false;
 
-                // 只檢查是否為 "Ragnarok : Zero"，如果不是則檢查進程名稱
-                if (title.Equals("Ragnarok : Zero", StringComparison.OrdinalIgnoreCase))
+                // 檢查是否匹配任何配置的遊戲標題，如果不是則檢查進程名稱
+                if (IsGameTitle(title))
                     return true;
 
-                // 如果標題不是 "Ragnarok : Zero"，但可能是已登入的RO視窗，檢查進程
+                // 如果標題不匹配配置的標題，但可能是已登入的RO視窗，檢查進程
                 return CheckProcessName(windowHandle);
             }
             catch (Exception ex)
@@ -1328,7 +1478,7 @@ namespace ROZeroLoginer.Services
                 LogService.Instance.Debug("[CheckProcessName] 進程名稱: '{0}', 路徑: '{1}'", processName, processPath);
 
                 // 檢查是否為 RO 相關的進程名稱
-                bool isRoProcess = processName.Contains("Ragnarok : Zero");
+                bool isRoProcess = _settings.GetEffectiveGameTitles().Any(gameTitle => processName.Contains(gameTitle));
 
                 LogService.Instance.Debug("[CheckProcessName] RO進程檢測結果: {0}", isRoProcess);
                 return isRoProcess;

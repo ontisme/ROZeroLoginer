@@ -34,7 +34,8 @@ namespace ROZeroLoginer.Windows
                 HideUsernames = settings.HideUsernames,
                 HidePasswords = settings.HidePasswords,
                 HideSecretKeys = settings.HideSecretKeys,
-                RoGamePath = settings.RoGamePath
+                RoGamePath = settings.RoGamePath,
+                GameTitles = new System.Collections.Generic.List<string>(settings.GameTitles)
             };
             
             LoadSettings();
@@ -55,6 +56,8 @@ namespace ROZeroLoginer.Windows
             HidePasswordsCheckBox.IsChecked = _settings.HidePasswords;
             HideSecretKeysCheckBox.IsChecked = _settings.HideSecretKeys;
             RoGamePathTextBox.Text = _settings.RoGamePath;
+            
+            LoadGameTitles();
             
             // 設定熱鍵下拉選單
             var hotkeyName = _settings.Hotkey.ToString();
@@ -181,7 +184,7 @@ namespace ROZeroLoginer.Windows
                         KeyData = File.Exists(keyFile) ? File.ReadAllText(keyFile) : "",
                         SettingsData = File.Exists(settingsFile) ? File.ReadAllText(settingsFile) : "",
                         BackupDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                        Version = "1.2.3"
+                        Version = "1.2.8"
                     };
                     
                     var json = Newtonsoft.Json.JsonConvert.SerializeObject(backupData, Newtonsoft.Json.Formatting.Indented);
@@ -274,6 +277,53 @@ namespace ROZeroLoginer.Windows
             {
                 RoGamePathTextBox.Text = openFileDialog.FileName;
             }
+        }
+
+        private void LoadGameTitles()
+        {
+            GameTitlesListBox.Items.Clear();
+            foreach (var title in _settings.GameTitles)
+            {
+                GameTitlesListBox.Items.Add(title);
+            }
+        }
+
+        private void AddGameTitleButton_Click(object sender, RoutedEventArgs e)
+        {
+            var newTitle = NewGameTitleTextBox.Text?.Trim();
+            if (string.IsNullOrEmpty(newTitle))
+            {
+                MessageBox.Show("請輸入遊戲標題", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                NewGameTitleTextBox.Focus();
+                return;
+            }
+
+            if (_settings.GameTitles.Any(title => string.Equals(title, newTitle, StringComparison.OrdinalIgnoreCase)))
+            {
+                MessageBox.Show("此遊戲標題已存在", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                NewGameTitleTextBox.Focus();
+                return;
+            }
+
+            _settings.GameTitles.Add(newTitle);
+            GameTitlesListBox.Items.Add(newTitle);
+            NewGameTitleTextBox.Text = "";
+            NewGameTitleTextBox.Focus();
+        }
+
+        private void RemoveGameTitleButton_Click(object sender, RoutedEventArgs e)
+        {
+            var selectedTitle = GameTitlesListBox.SelectedItem as string;
+            if (selectedTitle == null)
+            {
+                MessageBox.Show("請選擇要移除的遊戲標題", "提示", MessageBoxButton.OK, MessageBoxImage.Information);
+                return;
+            }
+
+            // 允許移除所有標題，系統會在需要時自動生成預設標題
+
+            _settings.GameTitles.Remove(selectedTitle);
+            GameTitlesListBox.Items.Remove(selectedTitle);
         }
     }
 }
