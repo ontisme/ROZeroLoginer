@@ -35,7 +35,18 @@ namespace ROZeroLoginer.Windows
                 HidePasswords = settings.HidePasswords,
                 HideSecretKeys = settings.HideSecretKeys,
                 RoGamePath = settings.RoGamePath,
-                GameTitles = new System.Collections.Generic.List<string>(settings.GameTitles)
+                GameTitles = new System.Collections.Generic.List<string>(settings.GameTitles),
+                CharacterSelectionDelayMs = settings.CharacterSelectionDelayMs,
+                ServerSelectionDelayMs = settings.ServerSelectionDelayMs,
+                KeyboardInputDelayMs = settings.KeyboardInputDelayMs,
+                MouseClickDelayMs = settings.MouseClickDelayMs,
+                GeneralOperationDelayMs = settings.GeneralOperationDelayMs,
+                MinimizeToTray = settings.MinimizeToTray,
+                WindowWidth = settings.WindowWidth,
+                WindowHeight = settings.WindowHeight,
+                WindowLeft = settings.WindowLeft,
+                WindowTop = settings.WindowTop,
+                WindowMaximized = settings.WindowMaximized
             };
             
             LoadSettings();
@@ -46,6 +57,7 @@ namespace ROZeroLoginer.Windows
             HotkeyEnabledCheckBox.IsChecked = _settings.HotkeyEnabled;
             StartWithWindowsCheckBox.IsChecked = _settings.StartWithWindows;
             ShowNotificationsCheckBox.IsChecked = _settings.ShowNotifications;
+            MinimizeToTrayCheckBox.IsChecked = _settings.MinimizeToTray;
             OtpValidityTextBox.Text = _settings.OtpValiditySeconds.ToString();
             OtpDelayTextBox.Text = _settings.OtpInputDelayMs.ToString();
             
@@ -56,6 +68,13 @@ namespace ROZeroLoginer.Windows
             HidePasswordsCheckBox.IsChecked = _settings.HidePasswords;
             HideSecretKeysCheckBox.IsChecked = _settings.HideSecretKeys;
             RoGamePathTextBox.Text = _settings.RoGamePath;
+            
+            // 延遲設定
+            CharacterSelectionDelayTextBox.Text = _settings.CharacterSelectionDelayMs.ToString();
+            ServerSelectionDelayTextBox.Text = _settings.ServerSelectionDelayMs.ToString();
+            KeyboardInputDelayTextBox.Text = _settings.KeyboardInputDelayMs.ToString();
+            MouseClickDelayTextBox.Text = _settings.MouseClickDelayMs.ToString();
+            GeneralOperationDelayTextBox.Text = _settings.GeneralOperationDelayMs.ToString();
             
             LoadGameTitles();
             
@@ -102,6 +121,42 @@ namespace ROZeroLoginer.Windows
                 return false;
             }
 
+            // 延遲設定驗證
+            if (!int.TryParse(CharacterSelectionDelayTextBox.Text, out int characterDelay) || characterDelay < 10 || characterDelay > 2000)
+            {
+                MessageBox.Show("角色選擇延遲必須介於 10 到 2000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                CharacterSelectionDelayTextBox.Focus();
+                return false;
+            }
+
+            if (!int.TryParse(ServerSelectionDelayTextBox.Text, out int serverDelay) || serverDelay < 10 || serverDelay > 1000)
+            {
+                MessageBox.Show("伺服器選擇延遲必須介於 10 到 1000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                ServerSelectionDelayTextBox.Focus();
+                return false;
+            }
+
+            if (!int.TryParse(KeyboardInputDelayTextBox.Text, out int keyboardDelay) || keyboardDelay < 50 || keyboardDelay > 1000)
+            {
+                MessageBox.Show("鍵盤輸入延遲必須介於 50 到 1000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                KeyboardInputDelayTextBox.Focus();
+                return false;
+            }
+
+            if (!int.TryParse(MouseClickDelayTextBox.Text, out int mouseDelay) || mouseDelay < 50 || mouseDelay > 2000)
+            {
+                MessageBox.Show("滑鼠點擊延遲必須介於 50 到 2000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MouseClickDelayTextBox.Focus();
+                return false;
+            }
+
+            if (!int.TryParse(GeneralOperationDelayTextBox.Text, out int generalDelay) || generalDelay < 100 || generalDelay > 5000)
+            {
+                MessageBox.Show("一般操作延遲必須介於 100 到 5000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                GeneralOperationDelayTextBox.Focus();
+                return false;
+            }
+
             return true;
         }
 
@@ -110,6 +165,7 @@ namespace ROZeroLoginer.Windows
             _settings.HotkeyEnabled = HotkeyEnabledCheckBox.IsChecked == true;
             _settings.StartWithWindows = StartWithWindowsCheckBox.IsChecked == true;
             _settings.ShowNotifications = ShowNotificationsCheckBox.IsChecked == true;
+            _settings.MinimizeToTray = MinimizeToTrayCheckBox.IsChecked == true;
             _settings.OtpValiditySeconds = int.Parse(OtpValidityTextBox.Text);
             _settings.OtpInputDelayMs = int.Parse(OtpDelayTextBox.Text);
             
@@ -120,6 +176,13 @@ namespace ROZeroLoginer.Windows
             _settings.HidePasswords = HidePasswordsCheckBox.IsChecked == true;
             _settings.HideSecretKeys = HideSecretKeysCheckBox.IsChecked == true;
             _settings.RoGamePath = RoGamePathTextBox.Text;
+            
+            // 延遲設定
+            _settings.CharacterSelectionDelayMs = int.Parse(CharacterSelectionDelayTextBox.Text);
+            _settings.ServerSelectionDelayMs = int.Parse(ServerSelectionDelayTextBox.Text);
+            _settings.KeyboardInputDelayMs = int.Parse(KeyboardInputDelayTextBox.Text);
+            _settings.MouseClickDelayMs = int.Parse(MouseClickDelayTextBox.Text);
+            _settings.GeneralOperationDelayMs = int.Parse(GeneralOperationDelayTextBox.Text);
             
             // 設定熱鍵
             var selectedItem = HotkeyComboBox.SelectedItem as ComboBoxItem;
@@ -184,7 +247,7 @@ namespace ROZeroLoginer.Windows
                         KeyData = File.Exists(keyFile) ? File.ReadAllText(keyFile) : "",
                         SettingsData = File.Exists(settingsFile) ? File.ReadAllText(settingsFile) : "",
                         BackupDate = DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"),
-                        Version = "1.2.8"
+                        Version = "1.3.0"
                     };
                     
                     var json = Newtonsoft.Json.JsonConvert.SerializeObject(backupData, Newtonsoft.Json.Formatting.Indented);

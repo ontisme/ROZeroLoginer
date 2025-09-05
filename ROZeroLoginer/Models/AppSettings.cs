@@ -21,6 +21,18 @@ namespace ROZeroLoginer.Models
         private bool _hideSecretKeys = true;
         private string _roGamePath = @"C:\Gravity\RagnarokZero\Ragexe.exe";
         private List<string> _gameTitles;
+        private int _characterSelectionDelayMs = 50;
+        private int _serverSelectionDelayMs = 50;
+        private int _keyboardInputDelayMs = 100;
+        private int _mouseClickDelayMs = 200;
+        private int _generalOperationDelayMs = 500;
+        private bool _minimizeToTray = false;
+        private double _windowWidth = 800;
+        private double _windowHeight = 600;
+        private double _windowLeft = -1;
+        private double _windowTop = -1;
+        private bool _windowMaximized = false;
+        private bool _useVerticalTabLayout = false;
 
         public Keys Hotkey
         {
@@ -148,6 +160,126 @@ namespace ROZeroLoginer.Models
             set
             {
                 _gameTitles = value ?? new List<string>();
+                OnPropertyChanged();
+            }
+        }
+
+        public int CharacterSelectionDelayMs
+        {
+            get => _characterSelectionDelayMs;
+            set
+            {
+                _characterSelectionDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int ServerSelectionDelayMs
+        {
+            get => _serverSelectionDelayMs;
+            set
+            {
+                _serverSelectionDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int KeyboardInputDelayMs
+        {
+            get => _keyboardInputDelayMs;
+            set
+            {
+                _keyboardInputDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int MouseClickDelayMs
+        {
+            get => _mouseClickDelayMs;
+            set
+            {
+                _mouseClickDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int GeneralOperationDelayMs
+        {
+            get => _generalOperationDelayMs;
+            set
+            {
+                _generalOperationDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool MinimizeToTray
+        {
+            get => _minimizeToTray;
+            set
+            {
+                _minimizeToTray = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public double WindowWidth
+        {
+            get => _windowWidth;
+            set
+            {
+                _windowWidth = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public double WindowHeight
+        {
+            get => _windowHeight;
+            set
+            {
+                _windowHeight = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public double WindowLeft
+        {
+            get => _windowLeft;
+            set
+            {
+                _windowLeft = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public double WindowTop
+        {
+            get => _windowTop;
+            set
+            {
+                _windowTop = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool WindowMaximized
+        {
+            get => _windowMaximized;
+            set
+            {
+                _windowMaximized = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool UseVerticalTabLayout
+        {
+            get => _useVerticalTabLayout;
+            set
+            {
+                _useVerticalTabLayout = value;
                 OnPropertyChanged();
             }
         }

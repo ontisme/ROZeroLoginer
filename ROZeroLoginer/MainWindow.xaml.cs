@@ -13,6 +13,8 @@ using System.Threading.Tasks;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Threading;
+using System.Drawing;
+using WinForms = System.Windows.Forms;
 using ROZeroLoginer.Models;
 using ROZeroLoginer.Services;
 using ROZeroLoginer.Utils;
@@ -34,6 +36,8 @@ namespace ROZeroLoginer
         private ObservableCollection<AccountDisplayItem> _displayAccounts;
         private string _currentGroupFilter = "所有分組";
         private bool _hasNewVersion = false;
+        private WinForms.NotifyIcon _trayIcon;
+        private bool _isVerticalTabMode = false;
 
         public AppSettings CurrentSettings
         {
@@ -88,9 +92,20 @@ namespace ROZeroLoginer
             InitializeTimer();
             LoadAccounts();
             LoadGroupTabs();
+            
+            // 初始化垂直標籤模式
+            _isVerticalTabMode = CurrentSettings.UseVerticalTabLayout;
+            UpdateTabControlLayout();
+            
             SetupHotkey();
 
             this.Closing += MainWindow_Closing;
+            
+            // 初始化系統匣圖示
+            InitializeTrayIcon();
+            
+            // 還原視窗位置和大小
+            RestoreWindowState();
 
             // 啟動時自動檢查更新
             CheckForUpdatesOnStartup();
@@ -104,6 +119,161 @@ namespace ROZeroLoginer
             _totpTimer.Interval = TimeSpan.FromSeconds(1);
             _totpTimer.Tick += TotpTimer_Tick;
             _totpTimer.Start();
+        }
+
+        private void InitializeTrayIcon()
+        {
+            try
+            {
+                // 創建系統匣圖示
+                _trayIcon = new WinForms.NotifyIcon();
+                
+                // 設定圖示（使用應用程式內建圖示）
+                var iconStream = System.Windows.Application.GetResourceStream(new Uri("pack://application:,,,/ROZeroLoginer;component/favicon.ico"));
+                if (iconStream != null)
+                {
+                    _trayIcon.Icon = new Icon(iconStream.Stream);
+                }
+                else
+                {
+                    // 如果沒有找到圖示檔案，使用系統預設圖示
+                    _trayIcon.Icon = SystemIcons.Application;
+                }
+
+                // 設定提示文字
+                var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
+                _trayIcon.Text = $"ROZero Loginer v{version}";
+
+                // 設定雙擊事件
+                _trayIcon.DoubleClick += TrayIcon_DoubleClick;
+
+                // 創建右鍵選單
+                var contextMenu = new WinForms.ContextMenuStrip();
+                contextMenu.Items.Add("顯示主視窗", null, (s, e) => ShowWindow());
+                contextMenu.Items.Add("-"); // 分隔線
+                contextMenu.Items.Add("退出", null, (s, e) => System.Windows.Application.Current.Shutdown());
+                _trayIcon.ContextMenuStrip = contextMenu;
+
+                // 處理視窗狀態變化
+                this.StateChanged += MainWindow_StateChanged;
+
+                LogService.Instance.Info("系統匣圖示初始化完成");
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Warning("系統匣圖示初始化失敗: {0}", ex.Message);
+            }
+        }
+
+        private void MainWindow_StateChanged(object sender, EventArgs e)
+        {
+            // 如果啟用了最小化到系統匣，且視窗最小化了，則隱藏視窗
+            if (_currentSettings?.MinimizeToTray == true && this.WindowState == WindowState.Minimized)
+            {
+                this.Hide();
+                _trayIcon.Visible = true;
+                
+                // 第一次最小化時顯示通知
+                if (_currentSettings?.ShowNotifications == true)
+                {
+                    _trayIcon.ShowBalloonTip(2000, "ROZero Loginer", "已最小化到系統匣", WinForms.ToolTipIcon.Info);
+                }
+            }
+        }
+
+        private void TrayIcon_DoubleClick(object sender, EventArgs e)
+        {
+            ShowWindow();
+        }
+
+        private void ShowWindow()
+        {
+            this.Show();
+            this.WindowState = WindowState.Normal;
+            this.Activate();
+            _trayIcon.Visible = false;
+        }
+
+        private void RestoreWindowState()
+        {
+            try
+            {
+                // 設定默認大小（如果沒有保存的設定）
+                if (_currentSettings.WindowWidth <= 0 || _currentSettings.WindowHeight <= 0)
+                {
+                    this.Width = 913;
+                    this.Height = 600;
+                    this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                }
+                else
+                {
+                    this.Width = _currentSettings.WindowWidth;
+                    this.Height = _currentSettings.WindowHeight;
+                }
+
+                if (_currentSettings.WindowLeft >= 0 && _currentSettings.WindowTop >= 0)
+                {
+                    // 確保視窗在可見螢幕範圍內
+                    var workingArea = SystemParameters.WorkArea;
+                    if (_currentSettings.WindowLeft < workingArea.Width - 100 && 
+                        _currentSettings.WindowTop < workingArea.Height - 50)
+                    {
+                        this.Left = _currentSettings.WindowLeft;
+                        this.Top = _currentSettings.WindowTop;
+                        this.WindowStartupLocation = WindowStartupLocation.Manual;
+                    }
+                    else
+                    {
+                        this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                    }
+                }
+                else
+                {
+                    this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+                }
+
+                if (_currentSettings.WindowMaximized)
+                {
+                    this.WindowState = WindowState.Maximized;
+                }
+
+                LogService.Instance.Info("視窗狀態已還原: {0}x{1} at ({2},{3}), 最大化: {4}", 
+                    this.Width, this.Height, this.Left, this.Top, this.WindowState == WindowState.Maximized);
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Warning("還原視窗狀態時發生錯誤: {0}", ex.Message);
+                // 發生錯誤時使用默認設定
+                this.Width = 913;
+                this.Height = 600;
+                this.WindowStartupLocation = WindowStartupLocation.CenterScreen;
+            }
+        }
+
+        private void SaveWindowState()
+        {
+            try
+            {
+                if (this.WindowState == WindowState.Maximized)
+                {
+                    _currentSettings.WindowMaximized = true;
+                }
+                else
+                {
+                    _currentSettings.WindowMaximized = false;
+                    _currentSettings.WindowWidth = this.ActualWidth;
+                    _currentSettings.WindowHeight = this.ActualHeight;
+                    _currentSettings.WindowLeft = this.Left;
+                    _currentSettings.WindowTop = this.Top;
+                }
+
+                _dataService.SaveSettings(_currentSettings);
+                LogService.Instance.Debug("視窗狀態已保存");
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Warning("保存視窗狀態時發生錯誤: {0}", ex.Message);
+            }
         }
 
         private void LoadAccounts()
@@ -132,42 +302,94 @@ namespace ROZeroLoginer
         {
             try
             {
-                var allGroups = _accounts?.Select(a => a.Group).Distinct().OrderBy(g => g).ToList() ?? new List<string>();
+                var allGroups = _accounts?.Select(a => a.Group).Distinct().Where(g => !string.IsNullOrEmpty(g)).ToList() ?? new List<string>();
+                
+                // 保存目前選中的分組
+                var currentSelectedGroup = _currentGroupFilter;
 
-                GroupTabControl.Items.Clear();
-
-                // 添加 "所有分組" TAB
-                var allTab = new TabItem
+                // 獲取現有的分組列表（除了"所有分組"）
+                var existingGroups = new List<string>();
+                for (int i = 1; i < GroupTabControl.Items.Count; i++) // 跳過第一個 "所有分組"
                 {
-                    Header = "所有分組",
-                    Tag = "所有分組"
-                };
-                GroupTabControl.Items.Add(allTab);
-
-                // 添加各個分組TAB
-                foreach (var group in allGroups)
-                {
-                    if (!string.IsNullOrEmpty(group))
+                    if (GroupTabControl.Items[i] is TabItem tabItem && tabItem.Tag != null)
                     {
-                        var tabItem = new TabItem
-                        {
-                            Header = group,
-                            Tag = group
-                        };
-                        GroupTabControl.Items.Add(tabItem);
+                        existingGroups.Add(tabItem.Tag.ToString());
                     }
                 }
 
-                // 默認選中第一個TAB
-                if (GroupTabControl.Items.Count > 0)
+                // 檢查分組是否有變化
+                var newGroups = allGroups.Except(existingGroups).ToList();
+                var removedGroups = existingGroups.Except(allGroups).ToList();
+                
+                // 只有當分組真的有變化時才重新創建
+                bool hasChanges = newGroups.Any() || removedGroups.Any() || GroupTabControl.Items.Count == 0;
+
+                if (hasChanges)
                 {
-                    GroupTabControl.SelectedIndex = 0;
+                    GroupTabControl.Items.Clear();
+
+                    // 添加 "所有分組" TAB
+                    var allTab = new TabItem
+                    {
+                        Header = "所有分組",
+                        Tag = "所有分組"
+                    };
+                    GroupTabControl.Items.Add(allTab);
+
+                    // 保持原有順序：先添加仍存在的現有分組
+                    foreach (var existingGroup in existingGroups)
+                    {
+                        if (allGroups.Contains(existingGroup))
+                        {
+                            var tabItem = new TabItem
+                            {
+                                Header = existingGroup,
+                                Tag = existingGroup
+                            };
+                            GroupTabControl.Items.Add(tabItem);
+                        }
+                    }
+
+                    // 然後在最後添加新分組
+                    foreach (var newGroup in newGroups)
+                    {
+                        var tabItem = new TabItem
+                        {
+                            Header = newGroup,
+                            Tag = newGroup
+                        };
+                        GroupTabControl.Items.Add(tabItem);
+                    }
+
+                    // 嘗試恢復之前選中的分組
+                    int indexToSelect = 0;
+                    if (!string.IsNullOrEmpty(currentSelectedGroup))
+                    {
+                        for (int i = 0; i < GroupTabControl.Items.Count; i++)
+                        {
+                            if (GroupTabControl.Items[i] is TabItem tabItem && 
+                                tabItem.Tag?.ToString() == currentSelectedGroup)
+                            {
+                                indexToSelect = i;
+                                break;
+                            }
+                        }
+                    }
+
+                    // 設定選中的TAB
+                    if (GroupTabControl.Items.Count > 0)
+                    {
+                        GroupTabControl.SelectedIndex = indexToSelect;
+                    }
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"加載分組TAB時發生錯誤: {ex.Message}");
             }
+            
+            // 確保新創建的標籤使用正確的樣式
+            UpdateTabControlLayout();
         }
 
         private void UpdateDisplayAccounts()
@@ -185,6 +407,152 @@ namespace ROZeroLoginer
             {
                 var displayItem = new AccountDisplayItem(account, CurrentSettings);
                 DisplayAccounts.Add(displayItem);
+            }
+        }
+
+        private void UpdateTabControlLayout()
+        {
+            if (GroupTabControl != null && VerticalTabPanel != null && VerticalTabScrollViewer != null && AccountsDataGrid != null)
+            {
+                // 尋找VerticalTabBorder
+                var verticalTabBorder = this.FindName("VerticalTabBorder") as System.Windows.Controls.Border;
+                
+                if (_isVerticalTabMode)
+                {
+                    // 垂直模式：隱藏TabControl，顯示垂直按鈕面板
+                    GroupTabControl.Visibility = System.Windows.Visibility.Collapsed;
+                    if (verticalTabBorder != null)
+                        verticalTabBorder.Visibility = System.Windows.Visibility.Visible;
+                    
+                    // 調整DataGrid佈局
+                    System.Windows.Controls.Grid.SetColumn(AccountsDataGrid, 1);
+                    System.Windows.Controls.Grid.SetRow(AccountsDataGrid, 1);
+                    System.Windows.Controls.Grid.SetRowSpan(AccountsDataGrid, 1);
+                    System.Windows.Controls.Grid.SetColumnSpan(AccountsDataGrid, 1);
+                    
+                    // 填充垂直按鈕
+                    PopulateVerticalTabs();
+                }
+                else
+                {
+                    // 水平模式：顯示TabControl，隱藏垂直按鈕面板
+                    GroupTabControl.Visibility = System.Windows.Visibility.Visible;
+                    if (verticalTabBorder != null)
+                        verticalTabBorder.Visibility = System.Windows.Visibility.Collapsed;
+                    
+                    // 調整DataGrid佈局
+                    System.Windows.Controls.Grid.SetColumn(AccountsDataGrid, 0);
+                    System.Windows.Controls.Grid.SetRow(AccountsDataGrid, 1);
+                    System.Windows.Controls.Grid.SetRowSpan(AccountsDataGrid, 1);
+                    System.Windows.Controls.Grid.SetColumnSpan(AccountsDataGrid, 2);
+                    
+                    // 應用水平樣式
+                    var style = (System.Windows.Style)GroupTabControl.Resources["HorizontalTabStyle"];
+                    foreach (System.Windows.Controls.TabItem tab in GroupTabControl.Items)
+                    {
+                        tab.Style = style;
+                    }
+                }
+                    
+                // 更新按鈕文字
+                if (ToggleVerticalTabButton != null)
+                {
+                    ToggleVerticalTabButton.Content = _isVerticalTabMode ? "水平標籤" : "垂直標籤";
+                }
+            }
+        }
+        
+        private void PopulateVerticalTabs()
+        {
+            if (VerticalTabPanel != null && GroupTabControl != null)
+            {
+                VerticalTabPanel.Children.Clear();
+                
+                // 為每個TabItem創建垂直按鈕
+                foreach (System.Windows.Controls.TabItem tabItem in GroupTabControl.Items)
+                {
+                    var button = new System.Windows.Controls.Button
+                    {
+                        Content = tabItem.Header?.ToString(),
+                        Tag = tabItem,
+                        Margin = new System.Windows.Thickness(0, 0, 0, 2),
+                        Padding = new System.Windows.Thickness(8, 10, 6, 10),
+                        MinWidth = 100,
+                        HorizontalAlignment = System.Windows.HorizontalAlignment.Stretch,
+                        HorizontalContentAlignment = System.Windows.HorizontalAlignment.Left,
+                        Background = System.Windows.Media.Brushes.Transparent,
+                        BorderThickness = new System.Windows.Thickness(2, 0, 0, 0),
+                        BorderBrush = System.Windows.Media.Brushes.Transparent,
+                        FontSize = 11,
+                        FontWeight = System.Windows.FontWeights.Medium
+                    };
+                    
+                    // 設定按鈕樣式
+                    UpdateVerticalButtonStyle(button, tabItem == GroupTabControl.SelectedItem);
+                    
+                    // 點擊事件
+                    button.Click += (s, e) =>
+                    {
+                        var clickedButton = s as System.Windows.Controls.Button;
+                        var associatedTab = clickedButton?.Tag as System.Windows.Controls.TabItem;
+                        if (associatedTab != null)
+                        {
+                            GroupTabControl.SelectedItem = associatedTab;
+                            UpdateAllVerticalButtonStyles();
+                        }
+                    };
+                    
+                    VerticalTabPanel.Children.Add(button);
+                }
+            }
+        }
+        
+        private void UpdateVerticalButtonStyle(System.Windows.Controls.Button button, bool isSelected)
+        {
+            try
+            {
+                if (isSelected)
+                {
+                    button.Background = System.Windows.Media.Brushes.White;
+                    button.BorderBrush = (System.Windows.Media.SolidColorBrush)FindResource("PrimaryBrush");
+                    button.Foreground = (System.Windows.Media.SolidColorBrush)FindResource("PrimaryBrush");
+                    button.FontWeight = System.Windows.FontWeights.SemiBold;
+                }
+                else
+                {
+                    button.Background = System.Windows.Media.Brushes.Transparent;
+                    button.BorderBrush = System.Windows.Media.Brushes.Transparent;
+                    button.Foreground = (System.Windows.Media.SolidColorBrush)FindResource("MutedForegroundBrush");
+                    button.FontWeight = System.Windows.FontWeights.Medium;
+                }
+            }
+            catch
+            {
+                // Fallback colors if resources not found
+                if (isSelected)
+                {
+                    button.Background = System.Windows.Media.Brushes.LightBlue;
+                    button.BorderBrush = System.Windows.Media.Brushes.Blue;
+                    button.Foreground = System.Windows.Media.Brushes.Blue;
+                }
+                else
+                {
+                    button.Background = System.Windows.Media.Brushes.Transparent;
+                    button.BorderBrush = System.Windows.Media.Brushes.Transparent;
+                    button.Foreground = System.Windows.Media.Brushes.Gray;
+                }
+            }
+        }
+        
+        private void UpdateAllVerticalButtonStyles()
+        {
+            if (VerticalTabPanel != null && GroupTabControl != null)
+            {
+                foreach (System.Windows.Controls.Button button in VerticalTabPanel.Children)
+                {
+                    var associatedTab = button.Tag as System.Windows.Controls.TabItem;
+                    UpdateVerticalButtonStyle(button, associatedTab == GroupTabControl.SelectedItem);
+                }
             }
         }
 
@@ -234,7 +602,7 @@ namespace ROZeroLoginer
 
             if (_accounts == null || _accounts.Count == 0)
             {
-                MessageBox.Show("沒有可用的帳號", "ROZero Loginer", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("沒有可用的帳號", "ROZero Loginer", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 return;
             }
 
@@ -297,7 +665,7 @@ namespace ROZeroLoginer
                 Dispatcher.Invoke(() =>
                 {
                     LoadAccounts(); // 確保即使出錯也重新載入帳號列表
-                    MessageBox.Show($"使用帳號時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                    System.Windows.MessageBox.Show($"使用帳號時發生錯誤: {ex.Message}", "錯誤", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 });
             }
         }
@@ -315,7 +683,7 @@ namespace ROZeroLoginer
                     TotpCountdownTextBlock.Text = $"({remaining}s)";
                     CopyTotpButton.IsEnabled = true;
                 }
-                catch (Exception ex)
+                catch (Exception)
                 {
                     TotpTextBox.Text = "錯誤";
                     TotpCountdownTextBlock.Text = "";
@@ -401,8 +769,8 @@ namespace ROZeroLoginer
                 else
                 {
                     StatusTextBlock.Text = $"批次新增完成：{successCount} 個成功，{errorCount} 個失敗";
-                    MessageBox.Show($"部分帳號新增失敗\n成功：{successCount} 個\n失敗：{errorCount} 個",
-                                  "批次新增結果", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.MessageBox.Show($"部分帳號新增失敗\n成功：{successCount} 個\n失敗：{errorCount} 個",
+                                  "批次新增結果", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 }
             }
         }
@@ -458,11 +826,11 @@ namespace ROZeroLoginer
                     {
                         ReloadAllData();
                         StatusTextBlock.Text = "資料還原完成，已重新載入所有資料";
-                        MessageBox.Show($"資料還原成功！已載入 {_accounts?.Count ?? 0} 個帳號。", "還原完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                        System.Windows.MessageBox.Show($"資料還原成功！已載入 {_accounts?.Count ?? 0} 個帳號。", "還原完成", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                     }
                     catch (Exception ex)
                     {
-                        MessageBox.Show($"資料還原後重新載入失敗: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                        System.Windows.MessageBox.Show($"資料還原後重新載入失敗: {ex.Message}", "錯誤", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                     }
                 }
             }
@@ -474,7 +842,7 @@ namespace ROZeroLoginer
         {
             if (!string.IsNullOrEmpty(TotpTextBox.Text))
             {
-                Clipboard.SetText(TotpTextBox.Text);
+                System.Windows.Clipboard.SetText(TotpTextBox.Text);
                 StatusTextBlock.Text = "TOTP 已複製到剪貼簿";
             }
         }
@@ -488,7 +856,7 @@ namespace ROZeroLoginer
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"開啟日誌檢視器時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"開啟日誌檢視器時發生錯誤: {ex.Message}", "錯誤", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -544,8 +912,8 @@ namespace ROZeroLoginer
                 if (updateInfo == null)
                 {
                     StatusTextBlock.Text = "檢查更新失敗";
-                    MessageBox.Show("無法檢查更新，請檢查網路連線或稍後再試。", "檢查更新",
-                        MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.MessageBox.Show("無法檢查更新，請檢查網路連線或稍後再試。", "檢查更新",
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
 
@@ -555,7 +923,7 @@ namespace ROZeroLoginer
                     UpdateCheckUpdateButtonAppearance();
                     StatusTextBlock.Text = $"發現新版本: {updateInfo.Version}";
 
-                    var result = MessageBox.Show(
+                    var result = System.Windows.MessageBox.Show(
                         $"發現新版本！\n\n" +
                         $"目前版本: v{System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3)}\n" +
                         $"最新版本: {updateInfo.Version}\n" +
@@ -563,10 +931,10 @@ namespace ROZeroLoginer
                         $"更新說明:\n{updateInfo.ReleaseNotes}\n\n" +
                         $"是否要前往下載頁面？",
                         "發現新版本",
-                        MessageBoxButton.YesNo,
-                        MessageBoxImage.Information);
+                        System.Windows.MessageBoxButton.YesNo,
+                        System.Windows.MessageBoxImage.Information);
 
-                    if (result == MessageBoxResult.Yes)
+                    if (result == System.Windows.MessageBoxResult.Yes)
                     {
                         updateService.OpenDownloadPage(updateInfo.DownloadUrl);
                     }
@@ -576,16 +944,16 @@ namespace ROZeroLoginer
                     _hasNewVersion = false;
                     UpdateCheckUpdateButtonAppearance();
                     StatusTextBlock.Text = "已是最新版本";
-                    MessageBox.Show($"目前已是最新版本 ({updateInfo.Version})", "檢查更新",
-                        MessageBoxButton.OK, MessageBoxImage.Information);
+                    System.Windows.MessageBox.Show($"目前已是最新版本 ({updateInfo.Version})", "檢查更新",
+                        System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             }
             catch (Exception ex)
             {
                 StatusTextBlock.Text = "檢查更新出錯";
                 LogService.Instance.Error(ex, "檢查更新時發生錯誤");
-                MessageBox.Show($"檢查更新時發生錯誤: {ex.Message}", "錯誤",
-                    MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"檢查更新時發生錯誤: {ex.Message}", "錯誤",
+                    System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
             finally
             {
@@ -610,12 +978,12 @@ namespace ROZeroLoginer
                               "• shadcn/ui 風格介面\n\n" +
                               "Copyright © ontisme 2025";
 
-            var result = MessageBox.Show(aboutMessage + "\n\n點擊「是」開啟 GitHub 頁面",
+            var result = System.Windows.MessageBox.Show(aboutMessage + "\n\n點擊「是」開啟 GitHub 頁面",
                                        "關於 ROZero Loginer",
-                                       MessageBoxButton.YesNo,
-                                       MessageBoxImage.Information);
+                                       System.Windows.MessageBoxButton.YesNo,
+                                       System.Windows.MessageBoxImage.Information);
 
-            if (result == MessageBoxResult.Yes)
+            if (result == System.Windows.MessageBoxResult.Yes)
             {
                 try
                 {
@@ -627,7 +995,7 @@ namespace ROZeroLoginer
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show($"無法開啟網頁: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.MessageBox.Show($"無法開啟網頁: {ex.Message}", "錯誤", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 }
             }
         }
@@ -640,6 +1008,12 @@ namespace ROZeroLoginer
                 _currentGroupFilter = selectedTab.Tag?.ToString() ?? "所有分組";
                 UpdateDisplayAccounts();
                 UpdateLaunchSelectedButtonState();
+                
+                // 如果是垂直模式，更新按鈕樣式
+                if (_isVerticalTabMode)
+                {
+                    UpdateAllVerticalButtonStyles();
+                }
             }
         }
 
@@ -653,11 +1027,19 @@ namespace ROZeroLoginer
             AccountsDataGrid.UnselectAll();
         }
 
+        private void ToggleVerticalTabButton_Click(object sender, RoutedEventArgs e)
+        {
+            _isVerticalTabMode = !_isVerticalTabMode;
+            CurrentSettings.UseVerticalTabLayout = _isVerticalTabMode;
+            _dataService.SaveSettings(CurrentSettings);
+            UpdateTabControlLayout();
+        }
+
         private void LaunchSelectedButton_Click(object sender, RoutedEventArgs e)
         {
             if (AccountsDataGrid.SelectedItems.Count == 0)
             {
-                MessageBox.Show("請選擇要啟動的帳號", "批次啟動", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("請選擇要啟動的帳號", "批次啟動", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 return;
             }
 
@@ -666,13 +1048,13 @@ namespace ROZeroLoginer
                 .Select(item => item.Account)
                 .ToList();
 
-            var result = MessageBox.Show(
+            var result = System.Windows.MessageBox.Show(
                 $"確定要啟動選中的 {selectedAccounts.Count} 個帳號嗎？",
                 "批次啟動",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Question);
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Question);
 
-            if (result == MessageBoxResult.Yes)
+            if (result == System.Windows.MessageBoxResult.Yes)
             {
                 // 縮小視窗到工作列
                 this.WindowState = WindowState.Minimized;
@@ -685,7 +1067,7 @@ namespace ROZeroLoginer
         {
             if (AccountsDataGrid.SelectedItems.Count == 0)
             {
-                MessageBox.Show("請選擇要刪除的帳號", "批次刪除", MessageBoxButton.OK, MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("請選擇要刪除的帳號", "批次刪除", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 return;
             }
 
@@ -694,14 +1076,14 @@ namespace ROZeroLoginer
                 .Select(item => item.Account)
                 .ToList();
 
-            var result = MessageBox.Show(
+            var result = System.Windows.MessageBox.Show(
                 $"確定要刪除選中的 {selectedAccounts.Count} 個帳號嗎？\n\n" +
                 "此操作無法復原！",
                 "批次刪除確認",
-                MessageBoxButton.YesNo,
-                MessageBoxImage.Warning);
+                System.Windows.MessageBoxButton.YesNo,
+                System.Windows.MessageBoxImage.Warning);
 
-            if (result == MessageBoxResult.Yes)
+            if (result == System.Windows.MessageBoxResult.Yes)
             {
                 var successCount = 0;
                 var errorCount = 0;
@@ -730,8 +1112,8 @@ namespace ROZeroLoginer
                 else
                 {
                     StatusTextBlock.Text = $"批次刪除完成：{successCount} 個成功，{errorCount} 個失敗";
-                    MessageBox.Show($"部分帳號刪除失敗\n成功：{successCount} 個\n失敗：{errorCount} 個",
-                                  "批次刪除結果", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.MessageBox.Show($"部分帳號刪除失敗\n成功：{successCount} 個\n失敗：{errorCount} 個",
+                                  "批次刪除結果", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                 }
             }
         }
@@ -744,7 +1126,7 @@ namespace ROZeroLoginer
 
                 if (string.IsNullOrEmpty(settings.RoGamePath) || !File.Exists(settings.RoGamePath))
                 {
-                    MessageBox.Show("RO 主程式路徑無效，請到設定中正確設定遊戲路徑。", "錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    System.Windows.MessageBox.Show("RO 主程式路徑無效，請到設定中正確設定遊戲路徑。", "錯誤", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Warning);
                     return;
                 }
 
@@ -779,7 +1161,7 @@ namespace ROZeroLoginer
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"啟動遊戲時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"啟動遊戲時發生錯誤: {ex.Message}", "錯誤", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
                 StatusTextBlock.Text = "遊戲啟動失敗";
             }
         }
@@ -827,8 +1209,8 @@ namespace ROZeroLoginer
                 else
                 {
                     StatusTextBlock.Text = $"批次啟動完成：{successCount} 個成功，{failCount} 個失敗";
-                    MessageBox.Show($"批次啟動完成\n成功：{successCount} 個\n失敗：{failCount} 個",
-                                  "批次啟動結果", MessageBoxButton.OK, MessageBoxImage.Information);
+                    System.Windows.MessageBox.Show($"批次啟動完成\n成功：{successCount} 個\n失敗：{failCount} 個",
+                                  "批次啟動結果", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 }
             });
         }
@@ -956,7 +1338,7 @@ namespace ROZeroLoginer
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"重新載入資料時發生錯誤: {ex.Message}", "錯誤", MessageBoxButton.OK, MessageBoxImage.Error);
+                System.Windows.MessageBox.Show($"重新載入資料時發生錯誤: {ex.Message}", "錯誤", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Error);
             }
         }
 
@@ -964,8 +1346,21 @@ namespace ROZeroLoginer
         private void MainWindow_Closing(object sender, System.ComponentModel.CancelEventArgs e)
         {
             LogService.Instance.Info("程序準備關閉");
+            
+            // 保存視窗狀態
+            SaveWindowState();
+            
             _totpTimer?.Stop();
             _hotkeyService?.UnregisterAllHotkeys();
+            
+            // 清理系統匣圖示
+            if (_trayIcon != null)
+            {
+                _trayIcon.Visible = false;
+                _trayIcon.Dispose();
+                _trayIcon = null;
+            }
+            
             LogService.Instance.Info("=== ROZero Loginer 已關閉 ===");
         }
     }
