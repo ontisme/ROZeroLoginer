@@ -62,6 +62,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <CheckBox Grid.Row="0" Name="StartWithWindowsCheckBox" Content="開機時自動啟動" 
@@ -70,16 +71,72 @@
                         <CheckBox Grid.Row="1" Name="ShowNotificationsCheckBox" Content="顯示通知" 
                           IsChecked="True" Margin="0,5"/>
 
-                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,5">
+                        <CheckBox Grid.Row="2" Name="MinimizeToTrayCheckBox" Content="最小化到系統匣" 
+                          IsChecked="False" Margin="0,5"/>
+
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="TOTP 有效期 (秒): " VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <TextBox Name="OtpValidityTextBox" Width="100" Text="30"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,5">
+                        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="OTP 輸入延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <TextBox Name="OtpDelayTextBox" Width="100" Text="2000"/>
                             <TextBlock Text="(建議: 100-5000)" VerticalAlignment="Center" Margin="10,0,0,0" 
                                Foreground="Gray" FontSize="11"/>
+                        </StackPanel>
+
+                    </Grid>
+                </GroupBox>
+
+                <!-- 延遲設定 -->
+                <GroupBox Header="延遲設定" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <TextBlock Grid.Row="0" Text="調整各項操作的延遲時間，可解決某些電腦選角色不正常的問題：" 
+                                   Foreground="Gray" FontSize="11" Margin="0,5"/>
+
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="角色選擇延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0" Width="140"/>
+                            <TextBox Name="CharacterSelectionDelayTextBox" Width="80" Text="50"/>
+                            <TextBlock Text="(建議: 50-500)" VerticalAlignment="Center" Margin="10,0,0,0" 
+                                       Foreground="Gray" FontSize="11"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="2" Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="伺服器選擇延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0" Width="140"/>
+                            <TextBox Name="ServerSelectionDelayTextBox" Width="80" Text="50"/>
+                            <TextBlock Text="(建議: 50-200)" VerticalAlignment="Center" Margin="10,0,0,0" 
+                                       Foreground="Gray" FontSize="11"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="鍵盤輸入延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0" Width="140"/>
+                            <TextBox Name="KeyboardInputDelayTextBox" Width="80" Text="100"/>
+                            <TextBlock Text="(建議: 100-300)" VerticalAlignment="Center" Margin="10,0,0,0" 
+                                       Foreground="Gray" FontSize="11"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="滑鼠點擊延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0" Width="140"/>
+                            <TextBox Name="MouseClickDelayTextBox" Width="80" Text="200"/>
+                            <TextBlock Text="(建議: 200-500)" VerticalAlignment="Center" Margin="10,0,0,0" 
+                                       Foreground="Gray" FontSize="11"/>
+                        </StackPanel>
+
+                        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="一般操作延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0" Width="140"/>
+                            <TextBox Name="GeneralOperationDelayTextBox" Width="80" Text="500"/>
+                            <TextBlock Text="(建議: 500-1000)" VerticalAlignment="Center" Margin="10,0,0,0" 
+                                       Foreground="Gray" FontSize="11"/>
                         </StackPanel>
                     </Grid>
                 </GroupBox>
