@@ -4,7 +4,7 @@
 
 A Ragnarok Online account management tool specifically designed for TWRO series (Official & Paradise servers) with OTP authentication and auto-login functionality.
 
-![Screenshot](https://i.ibb.co/v4PkJ7T5/image.png)
+![Screenshot](https://i.meee.com.tw/YkLn8rs.png)
 
 ## ✨ 主要功能
 
