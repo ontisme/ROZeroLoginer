@@ -522,7 +522,7 @@ namespace ROZeroLoginer.Services
                 LogService.Instance.Debug("[SelectServer] 執行伺服器選擇邏輯");
 
                 // 強制先往上四次回到第一個位置
-                for (int i = 0; i < 4; i++)
+                for (int i = 0; i < 10; i++)
                 {
                     SendKey(Keys.Up);
                     Thread.Sleep(_settings.ServerSelectionDelayMs);
@@ -564,13 +564,13 @@ namespace ROZeroLoginer.Services
                 // 角色排列：1-5第一排，6-10第二排，11-15第三排
                 
                 // 強制回到左上角 (角色1的位置)
-                for (int i = 0; i < 4; i++) // 最多往左4次
+                for (int i = 0; i < 10; i++) 
                 {
                     SendKey(Keys.Left);
                     Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
                 
-                for (int i = 0; i < 2; i++) // 最多往上2次
+                for (int i = 0; i < 10; i++)
                 {
                     SendKey(Keys.Up);
                     Thread.Sleep(_settings.CharacterSelectionDelayMs);
