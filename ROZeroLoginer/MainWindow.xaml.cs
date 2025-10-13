@@ -672,52 +672,16 @@ namespace ROZeroLoginer
 
         private void TotpTimer_Tick(object sender, EventArgs e)
         {
-            if (_selectedAccount != null && !string.IsNullOrEmpty(_selectedAccount.OtpSecret))
-            {
-                try
-                {
-                    var totp = _otpService.GenerateTotp(_selectedAccount.OtpSecret);
-                    var remaining = _otpService.GetTimeRemaining();
-
-                    TotpTextBox.Text = totp;
-                    TotpCountdownTextBlock.Text = $"({remaining}s)";
-                    CopyTotpButton.IsEnabled = true;
-                }
-                catch (Exception)
-                {
-                    TotpTextBox.Text = "錯誤";
-                    TotpCountdownTextBlock.Text = "";
-                    CopyTotpButton.IsEnabled = false;
-                }
-            }
-            else
-            {
-                TotpTextBox.Text = "";
-                TotpCountdownTextBlock.Text = "";
-                CopyTotpButton.IsEnabled = false;
-            }
+            // Timer tick - 保留用於未來擴展
         }
 
         private void AccountsDataGrid_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            // 處理詳細資料顯示 (使用最後選擇的項目)
+            // 處理選擇狀態 (使用最後選擇的項目)
             var selectedDisplayItem = AccountsDataGrid.SelectedItem as AccountDisplayItem;
             _selectedAccount = selectedDisplayItem?.Account;
 
-            if (_selectedAccount != null)
-            {
-                NameTextBox.Text = _selectedAccount.Name;
-                UsernameTextBox.Text = _selectedAccount.Username;
-
-                EditAccountButton.IsEnabled = true;
-            }
-            else
-            {
-                NameTextBox.Text = "";
-                UsernameTextBox.Text = "";
-
-                EditAccountButton.IsEnabled = false;
-            }
+            EditAccountButton.IsEnabled = _selectedAccount != null;
 
             // 更新批次操作按鈕狀態
             UpdateLaunchSelectedButtonState();
@@ -836,16 +800,6 @@ namespace ROZeroLoginer
             }
         }
 
-
-
-        private void CopyTotpButton_Click(object sender, RoutedEventArgs e)
-        {
-            if (!string.IsNullOrEmpty(TotpTextBox.Text))
-            {
-                System.Windows.Clipboard.SetText(TotpTextBox.Text);
-                StatusTextBlock.Text = "TOTP 已複製到剪貼簿";
-            }
-        }
 
         private void ViewLogButton_Click(object sender, RoutedEventArgs e)
         {
@@ -1321,15 +1275,8 @@ namespace ROZeroLoginer
                 _selectedAccount = null;
                 AccountsDataGrid.SelectedItem = null;
 
-                // 清空詳細資料顯示
-                NameTextBox.Text = "";
-                UsernameTextBox.Text = "";
-                TotpTextBox.Text = "";
-                TotpCountdownTextBlock.Text = "";
-
                 // 更新按鈕狀態
                 EditAccountButton.IsEnabled = false;
-                CopyTotpButton.IsEnabled = false;
                 UpdateLaunchSelectedButtonState();
 
                 // 更新視窗標題（如果版本有變化）

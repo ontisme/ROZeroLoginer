@@ -36,14 +36,8 @@
 
         <!-- Main Content -->
         <Grid Grid.Row="1" Grid.ColumnSpan="2" Margin="0,0,0,57" Grid.RowSpan="2">
-            <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*"/>
-                <ColumnDefinition Width="8"/>
-                <ColumnDefinition Width="350"/>
-            </Grid.ColumnDefinitions>
-
             <!-- Account List -->
-            <Border Grid.Column="0" Style="{StaticResource CardStyle}">
+            <Border Style="{StaticResource CardStyle}">
                 <Grid>
                     <Grid.RowDefinitions>
                         <RowDefinition Height="Auto"/>
@@ -233,52 +227,6 @@
                     </DataGrid>
                         </Grid>
                     </Grid>
-                </Grid>
-            </Border>
-
-            <!-- Account Details -->
-            <Border Grid.Column="2" Style="{StaticResource CardStyle}">
-                <Grid>
-                    <Grid.RowDefinitions>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="Auto"/>
-                        <RowDefinition Height="*"/>
-                    </Grid.RowDefinitions>
-
-                    <TextBlock Grid.Row="0" Text="帳號詳細資料" FontSize="18" FontWeight="SemiBold" 
-                               Foreground="{StaticResource ForegroundBrush}" Margin="0,0,0,16"/>
-
-                    <TextBlock Grid.Row="1" Text="名稱" FontWeight="Medium" 
-                               Foreground="{StaticResource ForegroundBrush}" Margin="0,8,0,4"/>
-                    <TextBox Grid.Row="2" Name="NameTextBox" Style="{StaticResource InputStyle}" 
-                             IsReadOnly="True" Margin="0,0,0,8"/>
-
-                    <TextBlock Grid.Row="3" Text="帳號" FontWeight="Medium" 
-                               Foreground="{StaticResource ForegroundBrush}" Margin="0,8,0,4"/>
-                    <TextBox Grid.Row="4" Name="UsernameTextBox" Style="{StaticResource InputStyle}" 
-                             IsReadOnly="True" Margin="0,0,0,8"/>
-
-                    <TextBlock Grid.Row="5" Text="當前 TOTP" FontWeight="Medium" 
-                               Foreground="{StaticResource ForegroundBrush}" Margin="0,8,0,4"/>
-                    <StackPanel Grid.Row="6" Orientation="Vertical" Margin="0,0,0,8">
-                        <Border Background="{StaticResource MutedBrush}" CornerRadius="6" Padding="12,8" Margin="0,0,0,8">
-                            <StackPanel Orientation="Horizontal" HorizontalAlignment="Center">
-                                <TextBox Name="TotpTextBox" Background="Transparent" BorderThickness="0" 
-                                         IsReadOnly="True" FontFamily="Consolas" FontSize="24" FontWeight="Bold"
-                                         HorizontalAlignment="Center" VerticalAlignment="Center"/>
-                                <TextBlock Name="TotpCountdownTextBlock" Margin="8,0,0,0" VerticalAlignment="Center"
-                                           Foreground="{StaticResource MutedForegroundBrush}"/>
-                            </StackPanel>
-                        </Border>
-                        <Button Name="CopyTotpButton" Content="複製 TOTP" Style="{StaticResource SecondaryButtonStyle}" 
-                                Click="CopyTotpButton_Click" IsEnabled="False"/>
-                    </StackPanel>
-
                 </Grid>
             </Border>
         </Grid>

@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -429,7 +430,7 @@ namespace ROZeroLoginer.Services
             // 確保目標視窗在前台
             bool setForegroundResult = SetForegroundWindow(targetWindow);
             LogService.Instance.Debug("[PrepareWindow] SetForegroundWindow 結果: {0}", setForegroundResult);
-            Thread.Sleep(500);
+            Thread.Sleep(_settings.GeneralOperationDelayMs);
 
             // 載入遊戲解析度設定
             if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
@@ -453,7 +454,7 @@ namespace ROZeroLoginer.Services
             CheckRagnarokWindowFocus(targetProcessId);
             LogService.Instance.Debug("[HandleAgreeButton] 視窗焦點檢查通過，開始點擊同意按鈕");
             ClickUsingMethod1(targetWindow, agreeX, agreeY);
-            Thread.Sleep(200);
+            Thread.Sleep(_settings.MouseClickDelayMs);
             LogService.Instance.Debug("[HandleAgreeButton] 同意按鈕點擊完成");
         }
 
@@ -467,17 +468,14 @@ namespace ROZeroLoginer.Services
             // 輸入帳號
             CheckRagnarokWindowFocus(targetProcessId);
             SendText(username);
-            Thread.Sleep(100);
 
             // 按下 TAB 鍵切換到密碼欄位
             CheckRagnarokWindowFocus(targetProcessId);
             SendKey(Keys.Tab);
-            Thread.Sleep(100);
 
             // 輸入密碼
             CheckRagnarokWindowFocus(targetProcessId);
             SendText(password);
-            Thread.Sleep(100);
 
             // 按下 ENTER 鍵提交
             CheckRagnarokWindowFocus(targetProcessId);
@@ -500,7 +498,7 @@ namespace ROZeroLoginer.Services
             CheckRagnarokWindowFocus(targetProcessId);
             string finalOtp = WaitForValidOtpTime(otpSecret, targetProcessId);
             SendText(finalOtp);
-            Thread.Sleep(100);
+            Thread.Sleep(_settings.KeyboardInputDelayMs);
 
             // 按下 ENTER 鍵提交
             CheckRagnarokWindowFocus(targetProcessId);
@@ -516,7 +514,7 @@ namespace ROZeroLoginer.Services
         {
             LogService.Instance.Debug("[SelectServer] 開始伺服器選擇 - 伺服器: {0}, 自動選擇: {1}", server, autoSelectServer);
 
-            Thread.Sleep(500);
+            Thread.Sleep(_settings.GeneralOperationDelayMs);
             CheckRagnarokWindowFocus(targetProcessId);
 
             if (autoSelectServer && server > 0)
@@ -527,14 +525,14 @@ namespace ROZeroLoginer.Services
                 for (int i = 0; i < 4; i++)
                 {
                     SendKey(Keys.Up);
-                    Thread.Sleep(50);
+                    Thread.Sleep(_settings.ServerSelectionDelayMs);
                 }
 
                 // 然後往下選擇指定的伺服器 (server-1 次，因為已經在第一個位置)
                 for (int i = 1; i < server; i++)
                 {
                     SendKey(Keys.Down);
-                    Thread.Sleep(50);
+                    Thread.Sleep(_settings.ServerSelectionDelayMs);
                 }
             }
             else
@@ -555,7 +553,7 @@ namespace ROZeroLoginer.Services
         {
             LogService.Instance.Debug("[SelectCharacter] 開始角色選擇 - 角色: {0}, 上次角色: {1}, 自動選擇: {2}", character, lastCharacter, autoSelectCharacter);
 
-            Thread.Sleep(500);
+            Thread.Sleep(_settings.GeneralOperationDelayMs);
             CheckRagnarokWindowFocus(targetProcessId);
 
             if (autoSelectCharacter && character > 0)
@@ -569,13 +567,13 @@ namespace ROZeroLoginer.Services
                 for (int i = 0; i < 4; i++) // 最多往左4次
                 {
                     SendKey(Keys.Left);
-                    Thread.Sleep(50);
+                    Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
                 
                 for (int i = 0; i < 2; i++) // 最多往上2次
                 {
                     SendKey(Keys.Up);
-                    Thread.Sleep(50);
+                    Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
                 
                 // 計算目標位置
@@ -588,14 +586,14 @@ namespace ROZeroLoginer.Services
                 for (int i = 0; i < targetRow; i++)
                 {
                     SendKey(Keys.Down);
-                    Thread.Sleep(50);
+                    Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
                 
                 // 移動到目標列
                 for (int i = 0; i < targetCol; i++)
                 {
                     SendKey(Keys.Right);
-                    Thread.Sleep(50);
+                    Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
                 
                 LogService.Instance.Debug("[SelectCharacter] 已移動到角色{0}的位置", character);
@@ -671,6 +669,7 @@ namespace ROZeroLoginer.Services
             }
 
             SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+            Thread.Sleep(_settings.KeyboardInputDelayMs);
         }
 
         public void SendKey(Keys key)
@@ -711,7 +710,9 @@ namespace ROZeroLoginer.Services
                 }
             };
 
-            SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT)));
+            SendInput((uint)inputs.Length, inputs, Marshal.SizeOf(typeof(INPUT))); 
+
+            Thread.Sleep(_settings.KeyboardInputDelayMs);
         }
 
         public void SendKeyCombo(Keys[] keys)
@@ -757,11 +758,8 @@ namespace ROZeroLoginer.Services
                 };
                 SendInput(1, new[] { input }, Marshal.SizeOf(typeof(INPUT)));
             }
-        }
+            Thread.Sleep(_settings.KeyboardInputDelayMs);
 
-        public IntPtr GetCurrentForegroundWindow()
-        {
-            return GetForegroundWindow();
         }
 
         public void LeftClick(int x, int y)
@@ -987,382 +985,6 @@ namespace ROZeroLoginer.Services
             return foundWindow;
         }
 
-        private string GetWindowInfo(IntPtr hWnd)
-        {
-            try
-            {
-                // 獲取視窗標題
-                int length = GetWindowTextLength(hWnd);
-                string windowTitle = "Unknown";
-                if (length > 0)
-                {
-                    var titleBuilder = new System.Text.StringBuilder(length + 1);
-                    GetWindowText(hWnd, titleBuilder, titleBuilder.Capacity);
-                    windowTitle = titleBuilder.ToString();
-                }
-
-                // 獲取進程信息
-                uint processId;
-                GetWindowThreadProcessId(hWnd, out processId);
-                string processName = "Unknown";
-                if (processId != 0)
-                {
-                    try
-                    {
-                        var process = System.Diagnostics.Process.GetProcessById((int)processId);
-                        processName = process.ProcessName;
-                    }
-                    catch { }
-                }
-
-                // 獲取視窗位置和大小
-                RECT windowRect;
-                string positionInfo = "無法獲取位置信息";
-                if (GetWindowRect(hWnd, out windowRect))
-                {
-                    int windowWidth = windowRect.Right - windowRect.Left;
-                    int windowHeight = windowRect.Bottom - windowRect.Top;
-                    positionInfo = $"位置: ({windowRect.Left}, {windowRect.Top})\n大小: {windowWidth}x{windowHeight}";
-                }
-
-                return $"標題: {windowTitle}\n進程: {processName}\n{positionInfo}";
-            }
-            catch
-            {
-                return "無法獲取視窗信息";
-            }
-        }
-
-        public (bool success, string message, int x, int y, List<(string method, bool userConfirmed)> results) TestMouseClickMethods(AppSettings settings = null)
-        {
-            try
-            {
-                // 尋找 RO 遊戲視窗
-                var targetWindow = FindRagnarokWindow();
-                if (targetWindow == IntPtr.Zero)
-                {
-                    return (false, "未找到 Ragnarok Online 遊戲視窗！\n請確認遊戲已經啟動。", 0, 0, new List<(string, bool)>());
-                }
-
-                // 獲取視窗標題和進程信息用於顯示
-                string windowInfo = GetWindowInfo(targetWindow);
-
-                // 確保目標視窗在前台
-                SetForegroundWindow(targetWindow);
-                Thread.Sleep(500); // 增加等待時間確保視窗切換完成
-
-                // 載入遊戲解析度設定
-                if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
-                {
-                    _resolutionService.LoadResolutionFromConfig(settings.RoGamePath);
-                }
-
-                // 獲取當前解析度
-                var width = _resolutionService.Width;
-                var height = _resolutionService.Height;
-
-                // 根據解析度計算同意按鈕位置
-                var (testX, testY) = _resolutionService.GetAgreeButtonPosition();
-
-                // 測試不同的點擊策略
-                var testResults = new List<(string method, bool userConfirmed)>();
-                string initialMessage = $"找到的遊戲視窗:\n{windowInfo}\n\n解析度: {width}x{height}\n測試座標: ({testX}, {testY})\n\n準備開始測試點擊\"同意\"按鈕...\n\n請確保遊戲畫面顯示登入界面，然後觀察每種方法是否成功點擊到同意按鈕。";
-
-                return (true, initialMessage, testX, testY, testResults);
-            }
-            catch (Exception ex)
-            {
-                return (false, $"測試失敗: {ex.Message}", 0, 0, new List<(string, bool)>());
-            }
-        }
-
-        public (bool success, string message) TestClickMethod1_SetCursorPos(AppSettings settings = null)
-        {
-            try
-            {
-                var targetWindow = FindRagnarokWindow();
-                if (targetWindow == IntPtr.Zero)
-                {
-                    return (false, "未找到 RO 遊戲視窗");
-                }
-
-                SetForegroundWindow(targetWindow);
-                Thread.Sleep(300);
-
-                if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
-                {
-                    _resolutionService.LoadResolutionFromConfig(settings.RoGamePath);
-                }
-
-                var (testX, testY) = _resolutionService.GetAgreeButtonPosition();
-
-                // 策略1: SetCursorPos + ClientToScreen + mouse_event
-                var clientPoint = new System.Drawing.Point(testX, testY);
-                bool converted = ClientToScreen(targetWindow, ref clientPoint);
-                if (!converted)
-                {
-                    return (false, "座標轉換失敗");
-                }
-
-                // 移動滑鼠
-                SetCursorPos(clientPoint.X, clientPoint.Y);
-                Thread.Sleep(200);
-
-                // 點擊
-                mouse_event(MOUSEEVENTF_LEFTDOWN, 0, 0, 0, IntPtr.Zero);
-                Thread.Sleep(50);
-                mouse_event(MOUSEEVENTF_LEFTUP, 0, 0, 0, IntPtr.Zero);
-
-                return (true, $"方法1: SetCursorPos + mouse_event\n已點擊座標: ({clientPoint.X}, {clientPoint.Y})\n\n是否成功點擊到\"同意\"按鈕？");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"方法1執行失敗: {ex.Message}");
-            }
-        }
-
-        public (bool success, string message) TestClickMethod2_SendInputRelative(AppSettings settings = null)
-        {
-            try
-            {
-                var targetWindow = FindRagnarokWindow();
-                if (targetWindow == IntPtr.Zero)
-                {
-                    return (false, "未找到 RO 遊戲視窗");
-                }
-
-                SetForegroundWindow(targetWindow);
-                Thread.Sleep(300);
-
-                if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
-                {
-                    _resolutionService.LoadResolutionFromConfig(settings.RoGamePath);
-                }
-
-                var (testX, testY) = _resolutionService.GetAgreeButtonPosition();
-
-                // 策略2: SendInput 相對移動 + 點擊
-                var clientPoint = new System.Drawing.Point(testX, testY);
-                bool converted = ClientToScreen(targetWindow, ref clientPoint);
-                if (!converted)
-                {
-                    return (false, "座標轉換失敗");
-                }
-
-                // 獲取當前滑鼠位置
-                System.Drawing.Point currentPos;
-                GetCursorPos(out currentPos);
-
-                // 計算相對移動量
-                int deltaX = clientPoint.X - currentPos.X;
-                int deltaY = clientPoint.Y - currentPos.Y;
-
-                var inputs = new INPUT[3];
-
-                // 移動滑鼠
-                inputs[0] = new INPUT
-                {
-                    type = INPUT_MOUSE,
-                    union = new INPUTUNION
-                    {
-                        mouse = new MOUSEINPUT
-                        {
-                            dx = deltaX,
-                            dy = deltaY,
-                            mouseData = 0,
-                            dwFlags = 0x0001, // MOUSEEVENTF_MOVE
-                            time = 0,
-                            dwExtraInfo = IntPtr.Zero
-                        }
-                    }
-                };
-
-                // 滑鼠按下
-                inputs[1] = new INPUT
-                {
-                    type = INPUT_MOUSE,
-                    union = new INPUTUNION
-                    {
-                        mouse = new MOUSEINPUT
-                        {
-                            dx = 0,
-                            dy = 0,
-                            mouseData = 0,
-                            dwFlags = MOUSEEVENTF_LEFTDOWN,
-                            time = 0,
-                            dwExtraInfo = IntPtr.Zero
-                        }
-                    }
-                };
-
-                // 滑鼠放開
-                inputs[2] = new INPUT
-                {
-                    type = INPUT_MOUSE,
-                    union = new INPUTUNION
-                    {
-                        mouse = new MOUSEINPUT
-                        {
-                            dx = 0,
-                            dy = 0,
-                            mouseData = 0,
-                            dwFlags = MOUSEEVENTF_LEFTUP,
-                            time = 0,
-                            dwExtraInfo = IntPtr.Zero
-                        }
-                    }
-                };
-
-                SendInput(3, inputs, Marshal.SizeOf(typeof(INPUT)));
-
-                return (true, $"方法2: SendInput 相對移動 + 點擊\n已點擊座標: ({clientPoint.X}, {clientPoint.Y})\n\n是否成功點擊到\"同意\"按鈕？");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"方法2執行失敗: {ex.Message}");
-            }
-        }
-
-        public (bool success, string message) TestClickMethod3_SendInputAbsolute(AppSettings settings = null)
-        {
-            try
-            {
-                var targetWindow = FindRagnarokWindow();
-                if (targetWindow == IntPtr.Zero)
-                {
-                    return (false, "未找到 RO 遊戲視窗");
-                }
-
-                SetForegroundWindow(targetWindow);
-                Thread.Sleep(300);
-
-                if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
-                {
-                    _resolutionService.LoadResolutionFromConfig(settings.RoGamePath);
-                }
-
-                var (testX, testY) = _resolutionService.GetAgreeButtonPosition();
-
-                // 策略3: SendInput 絕對移動 + 點擊
-                var clientPoint = new System.Drawing.Point(testX, testY);
-                bool converted = ClientToScreen(targetWindow, ref clientPoint);
-                if (!converted)
-                {
-                    return (false, "座標轉換失敗");
-                }
-
-                // 轉換為絕對座標 (0-65535)
-                int absX = (clientPoint.X * 65536) / System.Windows.Forms.Screen.PrimaryScreen.Bounds.Width;
-                int absY = (clientPoint.Y * 65536) / System.Windows.Forms.Screen.PrimaryScreen.Bounds.Height;
-
-                var inputs = new INPUT[3];
-
-                // 移動滑鼠到絕對位置
-                inputs[0] = new INPUT
-                {
-                    type = INPUT_MOUSE,
-                    union = new INPUTUNION
-                    {
-                        mouse = new MOUSEINPUT
-                        {
-                            dx = absX,
-                            dy = absY,
-                            mouseData = 0,
-                            dwFlags = MOUSEEVENTF_ABSOLUTE | 0x0001, // MOUSEEVENTF_MOVE
-                            time = 0,
-                            dwExtraInfo = IntPtr.Zero
-                        }
-                    }
-                };
-
-                // 滑鼠按下
-                inputs[1] = new INPUT
-                {
-                    type = INPUT_MOUSE,
-                    union = new INPUTUNION
-                    {
-                        mouse = new MOUSEINPUT
-                        {
-                            dx = 0,
-                            dy = 0,
-                            mouseData = 0,
-                            dwFlags = MOUSEEVENTF_LEFTDOWN,
-                            time = 0,
-                            dwExtraInfo = IntPtr.Zero
-                        }
-                    }
-                };
-
-                // 滑鼠放開
-                inputs[2] = new INPUT
-                {
-                    type = INPUT_MOUSE,
-                    union = new INPUTUNION
-                    {
-                        mouse = new MOUSEINPUT
-                        {
-                            dx = 0,
-                            dy = 0,
-                            mouseData = 0,
-                            dwFlags = MOUSEEVENTF_LEFTUP,
-                            time = 0,
-                            dwExtraInfo = IntPtr.Zero
-                        }
-                    }
-                };
-
-                SendInput(3, inputs, Marshal.SizeOf(typeof(INPUT)));
-
-                return (true, $"方法3: SendInput 絕對移動 + 點擊\n已點擊座標: ({clientPoint.X}, {clientPoint.Y})\n\n是否成功點擊到\"同意\"按鈕？");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"方法3執行失敗: {ex.Message}");
-            }
-        }
-
-        public (bool success, string message) TestClickMethod4_PostMessage(AppSettings settings = null)
-        {
-            try
-            {
-                var targetWindow = FindRagnarokWindow();
-                if (targetWindow == IntPtr.Zero)
-                {
-                    return (false, "未找到 RO 遊戲視窗");
-                }
-
-                SetForegroundWindow(targetWindow);
-                Thread.Sleep(300);
-
-                if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
-                {
-                    _resolutionService.LoadResolutionFromConfig(settings.RoGamePath);
-                }
-
-                var (testX, testY) = _resolutionService.GetAgreeButtonPosition();
-
-                // 策略4: PostMessage 直接發送點擊消息
-                IntPtr lParam = (IntPtr)((testY << 16) | (testX & 0xFFFF));
-
-                // 發送滑鼠移動消息
-                PostMessage(targetWindow, WM_MOUSEMOVE, IntPtr.Zero, lParam);
-                Thread.Sleep(50);
-
-                // 發送滑鼠按下消息
-                PostMessage(targetWindow, WM_LBUTTONDOWN, (IntPtr)MK_LBUTTON, lParam);
-                Thread.Sleep(50);
-
-                // 發送滑鼠放開消息
-                PostMessage(targetWindow, WM_LBUTTONUP, IntPtr.Zero, lParam);
-
-                return (true, $"方法4: PostMessage 直接點擊\n已點擊座標: ({testX}, {testY}) (視窗相對座標)\n注意：此方法不移動實體滑鼠\n\n是否成功點擊到\"同意\"按鈕？");
-            }
-            catch (Exception ex)
-            {
-                return (false, $"方法4執行失敗: {ex.Message}");
-            }
-        }
-
         private void ClickUsingMethod1(IntPtr targetWindow, int x, int y)
         {
             // 方法1: SetCursorPos + ClientToScreen + mouse_event (經測試驗證的最佳方法)
@@ -1471,7 +1093,7 @@ namespace ROZeroLoginer.Services
                 uint processId;
                 GetWindowThreadProcessId(windowHandle, out processId);
 
-                var process = System.Diagnostics.Process.GetProcessById((int)processId);
+                var process = Process.GetProcessById((int)processId);
                 var processName = process.ProcessName.ToLowerInvariant();
                 var processPath = process.MainModule?.FileName?.ToLowerInvariant() ?? "";
 
