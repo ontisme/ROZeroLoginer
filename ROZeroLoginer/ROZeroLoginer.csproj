@@ -86,6 +86,14 @@
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Windows\AgreeButtonPositionWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\PositionOverlayWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Windows\BatchAddWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
@@ -122,6 +130,12 @@
     </Compile>
     <Compile Include="Windows\AccountWindow.xaml.cs">
       <DependentUpon>AccountWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\AgreeButtonPositionWindow.xaml.cs">
+      <DependentUpon>AgreeButtonPositionWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\PositionOverlayWindow.xaml.cs">
+      <DependentUpon>PositionOverlayWindow.xaml</DependentUpon>
     </Compile>
     <Compile Include="Windows\BatchAddWindow.xaml.cs">
       <DependentUpon>BatchAddWindow.xaml</DependentUpon>

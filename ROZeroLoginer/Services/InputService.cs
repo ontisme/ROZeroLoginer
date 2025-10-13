@@ -446,9 +446,23 @@ namespace ROZeroLoginer.Services
         {
             LogService.Instance.Info("[HandleAgreeButton] 開始同意按鈕點擊流程");
 
-            // 根據解析度計算同意按鈕位置
-            var (agreeX, agreeY) = _resolutionService.GetAgreeButtonPosition();
-            LogService.Instance.Debug("[HandleAgreeButton] 同意按鈕位置: ({0}, {1})", agreeX, agreeY);
+            int agreeX, agreeY;
+
+            // 優先使用自定義位置
+            if (_settings.UseCustomAgreeButtonPosition &&
+                _settings.CustomAgreeButtonX > 0 &&
+                _settings.CustomAgreeButtonY > 0)
+            {
+                agreeX = _settings.CustomAgreeButtonX;
+                agreeY = _settings.CustomAgreeButtonY;
+                LogService.Instance.Info("[HandleAgreeButton] 使用自定義同意按鈕位置: ({0}, {1})", agreeX, agreeY);
+            }
+            else
+            {
+                // 根據解析度計算同意按鈕位置
+                (agreeX, agreeY) = _resolutionService.GetAgreeButtonPosition();
+                LogService.Instance.Debug("[HandleAgreeButton] 使用預設同意按鈕位置: ({0}, {1})", agreeX, agreeY);
+            }
 
             // 檢查視窗焦點並點擊同意按鈕
             CheckRagnarokWindowFocus(targetProcessId);
@@ -985,7 +999,7 @@ namespace ROZeroLoginer.Services
             return foundWindow;
         }
 
-        private void ClickUsingMethod1(IntPtr targetWindow, int x, int y)
+        public void ClickUsingMethod1(IntPtr targetWindow, int x, int y)
         {
             // 方法1: SetCursorPos + ClientToScreen + mouse_event (經測試驗證的最佳方法)
             LogService.Instance.Debug("[ClickUsingMethod1] 開始點擊 - 目標座標: ({0}, {1}), 視窗: {2}", x, y, targetWindow);

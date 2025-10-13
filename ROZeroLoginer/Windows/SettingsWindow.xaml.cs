@@ -46,9 +46,12 @@ namespace ROZeroLoginer.Windows
                 WindowHeight = settings.WindowHeight,
                 WindowLeft = settings.WindowLeft,
                 WindowTop = settings.WindowTop,
-                WindowMaximized = settings.WindowMaximized
+                WindowMaximized = settings.WindowMaximized,
+                UseCustomAgreeButtonPosition = settings.UseCustomAgreeButtonPosition,
+                CustomAgreeButtonX = settings.CustomAgreeButtonX,
+                CustomAgreeButtonY = settings.CustomAgreeButtonY
             };
-            
+
             LoadSettings();
         }
 
@@ -77,16 +80,21 @@ namespace ROZeroLoginer.Windows
             GeneralOperationDelayTextBox.Text = _settings.GeneralOperationDelayMs.ToString();
             
             LoadGameTitles();
-            
+
             // 設定熱鍵下拉選單
             var hotkeyName = _settings.Hotkey.ToString();
             var selectedItem = HotkeyComboBox.Items.Cast<ComboBoxItem>()
                 .FirstOrDefault(item => item.Tag.ToString() == hotkeyName);
-            
+
             if (selectedItem != null)
             {
                 HotkeyComboBox.SelectedItem = selectedItem;
             }
+
+            // 自定義同意按鈕位置設定
+            UseCustomAgreeButtonCheckBox.IsChecked = _settings.UseCustomAgreeButtonPosition;
+            UpdateAgreeButtonPositionDisplay();
+            SetAgreeButtonPositionButton.IsEnabled = _settings.UseCustomAgreeButtonPosition;
         }
 
         private void OkButton_Click(object sender, RoutedEventArgs e)
@@ -195,6 +203,9 @@ namespace ROZeroLoginer.Windows
                 }
             }
             
+            // 自定義同意按鈕位置設定
+            _settings.UseCustomAgreeButtonPosition = UseCustomAgreeButtonCheckBox.IsChecked == true;
+
             // 設定開機啟動
             SetStartupRegistry(_settings.StartWithWindows);
         }
@@ -387,6 +398,41 @@ namespace ROZeroLoginer.Windows
 
             _settings.GameTitles.Remove(selectedTitle);
             GameTitlesListBox.Items.Remove(selectedTitle);
+        }
+
+        private void UseCustomAgreeButtonCheckBox_Changed(object sender, RoutedEventArgs e)
+        {
+            if (SetAgreeButtonPositionButton != null)
+            {
+                SetAgreeButtonPositionButton.IsEnabled = UseCustomAgreeButtonCheckBox.IsChecked == true;
+            }
+        }
+
+        private void SetAgreeButtonPositionButton_Click(object sender, RoutedEventArgs e)
+        {
+            var positionWindow = new AgreeButtonPositionWindow(_settings);
+            positionWindow.ShowDialog();
+
+            // 檢查是否成功捕獲位置，而不僅依賴 DialogResult
+            if (positionWindow.PositionCaptured)
+            {
+                _settings.CustomAgreeButtonX = positionWindow.CapturedX;
+                _settings.CustomAgreeButtonY = positionWindow.CapturedY;
+                UpdateAgreeButtonPositionDisplay();
+                MessageBox.Show("同意按鈕位置已設定成功！", "設定完成", MessageBoxButton.OK, MessageBoxImage.Information);
+            }
+        }
+
+        private void UpdateAgreeButtonPositionDisplay()
+        {
+            if (_settings.CustomAgreeButtonX > 0 && _settings.CustomAgreeButtonY > 0)
+            {
+                AgreeButtonPositionTextBlock.Text = $"位置: X={_settings.CustomAgreeButtonX}, Y={_settings.CustomAgreeButtonY}";
+            }
+            else
+            {
+                AgreeButtonPositionTextBlock.Text = "位置: 未設定";
+            }
         }
     }
 }

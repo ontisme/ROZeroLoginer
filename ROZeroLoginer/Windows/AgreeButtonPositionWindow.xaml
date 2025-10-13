@@ -1,0 +1,94 @@
+<Window x:Class="ROZeroLoginer.Windows.AgreeButtonPositionWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="設定同意按鈕位置" Height="500" Width="600"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize"
+        Topmost="True"
+        Background="{StaticResource BackgroundBrush}">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <!-- 標題 -->
+        <TextBlock Grid.Row="0" Text="設定同意按鈕位置" FontSize="20" FontWeight="SemiBold"
+                   Foreground="{StaticResource ForegroundBrush}" Margin="0,0,0,20"/>
+
+        <!-- 說明 -->
+        <Border Grid.Row="1" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="操作說明" FontSize="15" FontWeight="SemiBold"
+                           Foreground="{StaticResource ForegroundBrush}" Margin="0,0,0,12"/>
+
+                <StackPanel Margin="0">
+                    <TextBlock TextWrapping="Wrap" Margin="0,6" Foreground="{StaticResource ForegroundBrush}">
+                        <Run FontWeight="SemiBold">步驟 1:</Run>
+                        <Run>啟動 RO 遊戲並進入登入畫面（顯示「同意」按鈕的畫面）</Run>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,6" Foreground="{StaticResource ForegroundBrush}">
+                        <Run FontWeight="SemiBold">步驟 2:</Run>
+                        <Run>點擊下方的「開始捕獲」按鈕</Run>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,6" Foreground="{StaticResource ForegroundBrush}">
+                        <Run FontWeight="SemiBold">步驟 3:</Run>
+                        <Run>在全螢幕覆蓋層上，將滑鼠移動到遊戲視窗的「同意」按鈕位置</Run>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,6" Foreground="{StaticResource ForegroundBrush}">
+                        <Run FontWeight="SemiBold">步驟 4:</Run>
+                        <Run>點擊滑鼠左鍵捕獲位置（不會實際點擊到遊戲）</Run>
+                    </TextBlock>
+                    <TextBlock TextWrapping="Wrap" Margin="0,6" Foreground="{StaticResource ForegroundBrush}">
+                        <Run FontWeight="SemiBold">步驟 5:</Run>
+                        <Run>確認位置後，可使用「測試位置」按鈕進行實際點擊測試</Run>
+                    </TextBlock>
+
+                    <Border Background="{StaticResource AccentBrush}" CornerRadius="6" Padding="12,8" Margin="0,12,0,0">
+                        <TextBlock TextWrapping="Wrap" Foreground="{StaticResource PrimaryBrush}" FontWeight="SemiBold">
+                            💡 捕獲模式下不會真實點擊遊戲，請放心操作！
+                        </TextBlock>
+                    </Border>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 狀態顯示 -->
+        <Border Grid.Row="2" Style="{StaticResource CardStyle}" Margin="0,0,0,16">
+            <StackPanel>
+                <TextBlock Text="捕獲狀態" FontSize="15" FontWeight="SemiBold"
+                           Foreground="{StaticResource ForegroundBrush}" Margin="0,0,0,12"/>
+
+                <StackPanel Margin="0">
+                    <TextBlock Name="StatusTextBlock" Text="等待開始捕獲..." FontSize="14"
+                               Foreground="{StaticResource MutedForegroundBrush}" Margin="0,4"/>
+                    <TextBlock Name="PositionTextBlock" Text="位置: 未設定" FontSize="15" Margin="0,8"
+                               FontWeight="SemiBold" Foreground="{StaticResource ForegroundBrush}"/>
+                    <TextBlock Name="WindowTitleTextBlock" Text="視窗: 未檢測" FontSize="13" Margin="0,4"
+                               Foreground="{StaticResource MutedForegroundBrush}"/>
+                </StackPanel>
+            </StackPanel>
+        </Border>
+
+        <!-- 按鈕 -->
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Center" Margin="0,0,0,16">
+            <Button Name="StartCaptureButton" Content="開始捕獲" Width="110" Height="36"
+                    Click="StartCaptureButton_Click" FontSize="14" FontWeight="SemiBold"
+                    Style="{StaticResource PrimaryButtonStyle}"/>
+            <Button Name="TestPositionButton" Content="測試位置" Width="110" Height="36"
+                    Click="TestPositionButton_Click" Margin="12,0,0,0" IsEnabled="False" FontSize="14"
+                    Style="{StaticResource SecondaryButtonStyle}"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="4" Orientation="Horizontal" HorizontalAlignment="Right">
+            <Button Name="OkButton" Content="確定" Width="90" Height="36"
+                    Click="OkButton_Click" IsDefault="True" IsEnabled="False"
+                    Style="{StaticResource PrimaryButtonStyle}"/>
+            <Button Name="CancelButton" Content="取消" Width="90" Height="36"
+                    Click="CancelButton_Click" IsCancel="True" Margin="12,0,0,0"
+                    Style="{StaticResource SecondaryButtonStyle}"/>
+        </StackPanel>
+    </Grid>
+</Window>

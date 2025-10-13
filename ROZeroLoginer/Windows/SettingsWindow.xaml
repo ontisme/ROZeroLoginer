@@ -1,8 +1,8 @@
 <Window x:Class="ROZeroLoginer.Windows.SettingsWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="設定" Height="763" Width="566" 
-        WindowStartupLocation="CenterScreen" ResizeMode="CanResize" MinHeight="700" MinWidth="500">
+        Title="設定" Height="800" Width="1000"
+        WindowStartupLocation="CenterScreen" ResizeMode="CanResize" MinHeight="700" MinWidth="900">
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="*"/>
@@ -11,7 +11,15 @@
 
         <!-- 主要內容區域 -->
         <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" HorizontalScrollBarVisibility="Disabled">
-            <StackPanel>
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="20"/>
+                    <ColumnDefinition Width="1*"/>
+                </Grid.ColumnDefinitions>
+
+                <!-- 左側欄 -->
+                <StackPanel Grid.Column="0">
 
                 <!-- 熱鍵設定 -->
                 <GroupBox Header="熱鍵設定" Margin="0,0,0,10">
@@ -89,6 +97,85 @@
                     </Grid>
                 </GroupBox>
 
+                <!-- 隱私模式設定 -->
+                <GroupBox Header="隱私模式設定" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <CheckBox Grid.Row="0" Name="PrivacyModeEnabledCheckBox" Content="啟用隱私模式"
+                          IsChecked="True" Margin="0,5" FontWeight="SemiBold"/>
+
+                        <TextBlock Grid.Row="1" Text="選擇要隱藏的內容："
+                           Foreground="Gray" FontSize="11" Margin="0,5"/>
+
+                        <CheckBox Grid.Row="2" Name="HideNamesCheckBox" Content="隱藏名稱"
+                          IsChecked="False" Margin="20,2"/>
+
+                        <CheckBox Grid.Row="3" Name="HideUsernamesCheckBox" Content="隱藏帳號"
+                          IsChecked="False" Margin="20,2"/>
+
+                        <CheckBox Grid.Row="4" Name="HidePasswordsCheckBox" Content="隱藏密碼"
+                          IsChecked="True" Margin="20,2"/>
+
+                        <CheckBox Grid.Row="5" Name="HideSecretKeysCheckBox" Content="隱藏密鑰 (Secret Key)"
+                          IsChecked="True" Margin="20,2"/>
+                    </Grid>
+                </GroupBox>
+
+                <!-- 遊戲設定 -->
+                <GroupBox Header="遊戲設定" Margin="0,0,0,10">
+                    <Grid>
+                        <Grid.RowDefinitions>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
+                        </Grid.RowDefinitions>
+
+                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="RO 主程式路徑: " VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBox Name="RoGamePathTextBox" Width="250" Text="C:\Gravity\RagnarokZero\Ragexe.exe" Height="24" VerticalAlignment="Center"/>
+                            <Button Name="BrowseGamePathButton" Content="瀏覽" Style="{StaticResource ButtonStyle}"
+                            Width="60" Height="32" Click="BrowseGamePathButton_Click" Margin="5,0,0,0" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="1" Text="設定 RO 主程式位置以啟用遊戲啟動功能"
+                           Foreground="Gray" FontSize="11" Margin="0,5"/>
+
+                        <Separator Grid.Row="2" Margin="0,10"/>
+
+                        <CheckBox Grid.Row="3" Name="UseCustomAgreeButtonCheckBox"
+                                  Content="使用自定義【同意】按鈕位置" IsChecked="False" Margin="0,10,0,5"
+                                  Checked="UseCustomAgreeButtonCheckBox_Changed"
+                                  Unchecked="UseCustomAgreeButtonCheckBox_Changed"/>
+
+                        <StackPanel Grid.Row="4" Orientation="Vertical" Margin="20,5,0,5">
+                            <StackPanel Orientation="Horizontal" Margin="0,5">
+                                <TextBlock Name="AgreeButtonPositionTextBlock" Text="位置: 未設定"
+                                           VerticalAlignment="Center" Margin="0,0,15,0" Width="200"/>
+                                <Button Name="SetAgreeButtonPositionButton" Content="設定位置"
+                                        Style="{StaticResource ButtonStyle}" Width="90" Height="32"
+                                        Click="SetAgreeButtonPositionButton_Click" IsEnabled="False"/>
+                            </StackPanel>
+                            <TextBlock Text="若您使用非常規的遊戲解析度可能導致無法正確點擊同意按鈕，可自行自訂同意的位置"
+                                       Foreground="Gray" FontSize="11" Margin="0,5"/>
+                        </StackPanel>
+                    </Grid>
+                </GroupBox>
+
+                </StackPanel>
+
+                <!-- 右側欄 -->
+                <StackPanel Grid.Column="2">
+
                 <!-- 延遲設定 -->
                 <GroupBox Header="延遲設定" Margin="0,0,0,10">
                     <Grid>
@@ -141,58 +228,6 @@
                     </Grid>
                 </GroupBox>
 
-                <!-- 隱私模式設定 -->
-                <GroupBox Header="隱私模式設定" Margin="0,0,0,10">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <CheckBox Grid.Row="0" Name="PrivacyModeEnabledCheckBox" Content="啟用隱私模式" 
-                          IsChecked="True" Margin="0,5" FontWeight="SemiBold"/>
-
-                        <TextBlock Grid.Row="1" Text="選擇要隱藏的內容：" 
-                           Foreground="Gray" FontSize="11" Margin="0,5"/>
-
-                        <CheckBox Grid.Row="2" Name="HideNamesCheckBox" Content="隱藏名稱" 
-                          IsChecked="False" Margin="20,2"/>
-
-                        <CheckBox Grid.Row="3" Name="HideUsernamesCheckBox" Content="隱藏帳號" 
-                          IsChecked="False" Margin="20,2"/>
-
-                        <CheckBox Grid.Row="4" Name="HidePasswordsCheckBox" Content="隱藏密碼" 
-                          IsChecked="True" Margin="20,2"/>
-
-                        <CheckBox Grid.Row="5" Name="HideSecretKeysCheckBox" Content="隱藏密鑰 (Secret Key)" 
-                          IsChecked="True" Margin="20,2"/>
-                    </Grid>
-                </GroupBox>
-
-                <!-- 遊戲設定 -->
-                <GroupBox Header="遊戲設定" Margin="0,0,0,10">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto"/>
-                            <RowDefinition Height="Auto"/>
-                        </Grid.RowDefinitions>
-
-                        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="RO 主程式路徑: " VerticalAlignment="Center" Margin="0,0,10,0"/>
-                            <TextBox Name="RoGamePathTextBox" Width="300" Text="C:\Gravity\RagnarokZero\Ragexe.exe" Height="17"/>
-                            <Button Name="BrowseGamePathButton" Content="瀏覽" Style="{StaticResource ButtonStyle}" 
-                            Width="60" Click="BrowseGamePathButton_Click" Margin="5,0,0,0"/>
-                        </StackPanel>
-
-                        <TextBlock Grid.Row="1" Text="設定 RO 主程式位置以啟用遊戲啟動功能" 
-                           Foreground="Gray" FontSize="11" Margin="0,5"/>
-                    </Grid>
-                </GroupBox>
-
                 <!-- 遊戲標題設定 -->
                 <GroupBox Header="遊戲標題設定" Margin="0,0,0,10">
                     <Grid>
@@ -223,8 +258,8 @@
                     </Grid>
                 </GroupBox>
 
-                <!-- 安全設定 -->
-                <GroupBox Header="安全設定" Margin="0,0,0,10">
+                <!-- 備份設定 -->
+                <GroupBox Header="備份設定" Margin="0,0,0,10">
                     <Grid>
                         <Grid.RowDefinitions>
                             <RowDefinition Height="Auto"/>
@@ -235,25 +270,24 @@
                            Foreground="Gray" FontSize="11" Margin="0,5"/>
 
                         <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,5">
-                            <Button Name="BackupButton" Content="備份資料" Style="{StaticResource ButtonStyle}" 
-                            Width="80" Click="BackupButton_Click"/>
-                            <Button Name="RestoreButton" Content="還原資料" Style="{StaticResource ButtonStyle}" 
-                            Width="80" Click="RestoreButton_Click"/>
+                            <Button Name="BackupButton" Content="備份資料" Style="{StaticResource ButtonStyle}"
+                            Width="80" Height="32" Click="BackupButton_Click"/>
+                            <Button Name="RestoreButton" Content="還原資料" Style="{StaticResource ButtonStyle}"
+                            Width="80" Height="32" Click="RestoreButton_Click" Margin="10,0,0,0"/>
                         </StackPanel>
                     </Grid>
                 </GroupBox>
 
-                <!-- 關於 -->
-
-            </StackPanel>
+                </StackPanel>
+            </Grid>
         </ScrollViewer>
 
         <!-- 按鈕 -->
         <StackPanel Grid.Row="1" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,10,0,10">
-            <Button Name="OkButton" Content="確定" Style="{StaticResource ButtonStyle}" 
-                    Width="80" Click="OkButton_Click" IsDefault="True"/>
-            <Button Name="CancelButton" Content="取消" Style="{StaticResource ButtonStyle}" 
-                    Width="80" Click="CancelButton_Click" IsCancel="True"/>
+            <Button Name="OkButton" Content="確定" Style="{StaticResource ButtonStyle}"
+                    Width="80" Height="32" Click="OkButton_Click" IsDefault="True"/>
+            <Button Name="CancelButton" Content="取消" Style="{StaticResource ButtonStyle}"
+                    Width="80" Height="32" Click="CancelButton_Click" IsCancel="True" Margin="10,0,0,0"/>
         </StackPanel>
     </Grid>
 </Window>

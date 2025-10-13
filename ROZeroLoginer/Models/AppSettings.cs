@@ -33,6 +33,9 @@ namespace ROZeroLoginer.Models
         private double _windowTop = -1;
         private bool _windowMaximized = false;
         private bool _useVerticalTabLayout = false;
+        private bool _useCustomAgreeButtonPosition = false;
+        private int _customAgreeButtonX = 0;
+        private int _customAgreeButtonY = 0;
 
         public Keys Hotkey
         {
@@ -280,6 +283,36 @@ namespace ROZeroLoginer.Models
             set
             {
                 _useVerticalTabLayout = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool UseCustomAgreeButtonPosition
+        {
+            get => _useCustomAgreeButtonPosition;
+            set
+            {
+                _useCustomAgreeButtonPosition = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int CustomAgreeButtonX
+        {
+            get => _customAgreeButtonX;
+            set
+            {
+                _customAgreeButtonX = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int CustomAgreeButtonY
+        {
+            get => _customAgreeButtonY;
+            set
+            {
+                _customAgreeButtonY = value;
                 OnPropertyChanged();
             }
         }
