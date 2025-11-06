@@ -20,12 +20,17 @@ namespace ROZeroLoginer.Models
         private bool _hidePasswords = true;
         private bool _hideSecretKeys = true;
         private string _roGamePath = @"C:\Gravity\RagnarokZero\Ragexe.exe";
+        private string _gameStartupArguments = "1rag1";
         private List<string> _gameTitles;
         private int _characterSelectionDelayMs = 50;
         private int _serverSelectionDelayMs = 50;
         private int _keyboardInputDelayMs = 100;
         private int _mouseClickDelayMs = 200;
-        private int _generalOperationDelayMs = 500;
+        private int _stepDelayMs = 500;
+        private int _windowFocusDelayMs = 300;
+        private int _windowReadyTimeoutMs = 5000;
+        private int _windowReadyCheckIntervalMs = 300;
+        private int _windowFocusRetries = 3;
         private bool _minimizeToTray = false;
         private double _windowWidth = 800;
         private double _windowHeight = 600;
@@ -157,6 +162,16 @@ namespace ROZeroLoginer.Models
             }
         }
 
+        public string GameStartupArguments
+        {
+            get => _gameStartupArguments;
+            set
+            {
+                _gameStartupArguments = value;
+                OnPropertyChanged();
+            }
+        }
+
         public List<string> GameTitles
         {
             get => _gameTitles ?? (_gameTitles = new List<string>());
@@ -203,16 +218,6 @@ namespace ROZeroLoginer.Models
             set
             {
                 _mouseClickDelayMs = value;
-                OnPropertyChanged();
-            }
-        }
-
-        public int GeneralOperationDelayMs
-        {
-            get => _generalOperationDelayMs;
-            set
-            {
-                _generalOperationDelayMs = value;
                 OnPropertyChanged();
             }
         }
@@ -317,8 +322,58 @@ namespace ROZeroLoginer.Models
             }
         }
 
+        public int StepDelayMs
+        {
+            get => _stepDelayMs;
+            set
+            {
+                _stepDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int WindowFocusDelayMs
+        {
+            get => _windowFocusDelayMs;
+            set
+            {
+                _windowFocusDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int WindowReadyTimeoutMs
+        {
+            get => _windowReadyTimeoutMs;
+            set
+            {
+                _windowReadyTimeoutMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int WindowReadyCheckIntervalMs
+        {
+            get => _windowReadyCheckIntervalMs;
+            set
+            {
+                _windowReadyCheckIntervalMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public int WindowFocusRetries
+        {
+            get => _windowFocusRetries;
+            set
+            {
+                _windowFocusRetries = value;
+                OnPropertyChanged();
+            }
+        }
+
         /// <summary>
-        /// 獲取有效的遊戲標題列表，如果為空則返回預設標題
+        /// 獲取有效的遊戲標題列表,如果為空則返回預設標題
         /// </summary>
         public List<string> GetEffectiveGameTitles()
         {

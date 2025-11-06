@@ -8,7 +8,7 @@ using System.Windows;
 // 變更這些屬性的值即可修改組件的相關
 // 資訊。
 [assembly: AssemblyTitle("ROZeroLoginer")]
-[assembly: AssemblyDescription("Ragnarok Online Zero 帳號管理工具 - 支援 TOTP 驗證與自動登入")]
+[assembly: AssemblyDescription("Ragnarok Online 帳號管理工具 - 支援 TOTP 驗證與自動登入")]
 [assembly: AssemblyConfiguration("")]
 [assembly: AssemblyCompany("ontisme")]
 [assembly: AssemblyProduct("ROZeroLoginer")]
@@ -48,6 +48,6 @@ using System.Windows;
 //      組建編號
 //      修訂
 //
-[assembly: AssemblyVersion("1.4.0.0")]
-[assembly: AssemblyFileVersion("1.4.0.0")]
-[assembly: AssemblyInformationalVersion("1.4.0")]
+[assembly: AssemblyVersion("1.4.1.0")]
+[assembly: AssemblyFileVersion("1.4.1.0")]
+[assembly: AssemblyInformationalVersion("1.4.1")]

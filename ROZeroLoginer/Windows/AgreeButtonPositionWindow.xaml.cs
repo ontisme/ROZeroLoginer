@@ -63,16 +63,52 @@ namespace ROZeroLoginer.Windows
         private string _capturedWindowTitle = "";
         private IntPtr _capturedWindowHandle = IntPtr.Zero;
         private Models.AppSettings _settings;
+        private Window _mainWindow;
+        private Window _settingsWindow;
+        private WindowState _originalMainWindowState;
+        private WindowState _originalSettingsWindowState;
 
         public int CapturedX => _capturedX;
         public int CapturedY => _capturedY;
         public bool PositionCaptured { get; private set; } = false;
 
-        public AgreeButtonPositionWindow(Models.AppSettings settings)
+        public AgreeButtonPositionWindow(Models.AppSettings settings, Window mainWindow = null, Window settingsWindow = null)
         {
             InitializeComponent();
             _settings = settings;
+            _mainWindow = mainWindow;
+            _settingsWindow = settingsWindow;
+
             LogService.Instance.Info("同意按鈕位置設定視窗已開啟");
+
+            // 視窗載入時最小化其他視窗
+            this.Loaded += AgreeButtonPositionWindow_Loaded;
+        }
+
+        private void AgreeButtonPositionWindow_Loaded(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // 保存並最小化主視窗
+                if (_mainWindow != null)
+                {
+                    _originalMainWindowState = _mainWindow.WindowState;
+                    _mainWindow.WindowState = WindowState.Minimized;
+                    LogService.Instance.Debug("[AgreeButtonPosition] 主視窗已最小化");
+                }
+
+                // 保存並最小化設定視窗
+                if (_settingsWindow != null)
+                {
+                    _originalSettingsWindowState = _settingsWindow.WindowState;
+                    _settingsWindow.WindowState = WindowState.Minimized;
+                    LogService.Instance.Debug("[AgreeButtonPosition] 設定視窗已最小化");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Warning("[AgreeButtonPosition] 最小化視窗時發生錯誤: {0}", ex.Message);
+            }
         }
 
         private void StartCaptureButton_Click(object sender, RoutedEventArgs e)
@@ -268,11 +304,28 @@ namespace ROZeroLoginer.Windows
         {
             try
             {
+                // 恢復主視窗狀態
+                if (_mainWindow != null)
+                {
+                    _mainWindow.WindowState = _originalMainWindowState;
+                    _mainWindow.Activate();
+                    LogService.Instance.Debug("[AgreeButtonPosition] 主視窗已恢復");
+                }
+
+                // 恢復設定視窗狀態
+                if (_settingsWindow != null)
+                {
+                    _settingsWindow.WindowState = _originalSettingsWindowState;
+                    _settingsWindow.Activate();
+                    LogService.Instance.Debug("[AgreeButtonPosition] 設定視窗已恢復");
+                }
+
                 LogService.Instance.Info("同意按鈕位置設定視窗已關閉");
             }
             catch (Exception ex)
             {
                 // 記錄錯誤但不拋出
+                LogService.Instance.Warning("[AgreeButtonPosition] OnClosed 發生錯誤: {0}", ex.Message);
                 System.Diagnostics.Debug.WriteLine($"OnClosed error: {ex.Message}");
             }
             finally

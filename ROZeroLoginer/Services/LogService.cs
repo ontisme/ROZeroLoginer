@@ -53,7 +53,7 @@ namespace ROZeroLoginer.Services
             try
             {
                 // 創建新日誌文件，如果存在則覆蓋
-                var header = $"=== ROZero Loginer 日誌文件 - {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===";
+                var header = $"=== Ragnarok Loginer 日誌文件 - {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===";
                 lock (_lockObject)
                 {
                     File.WriteAllText(_currentLogFile, header + Environment.NewLine);
@@ -120,15 +120,25 @@ namespace ROZeroLoginer.Services
             }
         }
 
-        private void CleanupOldLogs()
+        /// <summary>
+        /// 清理舊日誌文件 (保留指定天數)
+        /// </summary>
+        /// <param name="retentionDays">保留天數,預設3天</param>
+        /// <returns>清理的文件數量</returns>
+        public int CleanupOldLogs(int retentionDays = 3)
         {
+            int deletedCount = 0;
             try
             {
-                var cutoffDate = DateTime.Now.AddDays(-7); // 保留最近7天的日誌
+                var cutoffDate = DateTime.Now.AddDays(-retentionDays);
                 var logFiles = Directory.GetFiles(_logDirectory, "ROZeroLoginer_*.log");
-                
+
                 foreach (var file in logFiles)
                 {
+                    // 跳過當前日誌文件
+                    if (file == _currentLogFile)
+                        continue;
+
                     var fileName = Path.GetFileNameWithoutExtension(file);
                     // 新格式: ROZeroLoginer_yyyyMMdd_HHmmss
                     // 舊格式: ROZeroLoginer_yyyyMMdd
@@ -137,25 +147,76 @@ namespace ROZeroLoginer.Services
                         var datePart = fileName.Substring("ROZeroLoginer_".Length);
                         DateTime fileDate = DateTime.MinValue;
                         bool validDate = false;
-                        
+
                         // 嘗試新格式 (yyyyMMdd_HHmmss)
                         if (datePart.Length >= 8)
                         {
                             var dateString = datePart.Substring(0, 8);
                             validDate = DateTime.TryParseExact(dateString, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out fileDate);
                         }
-                        
+
                         if (validDate && fileDate < cutoffDate)
                         {
                             File.Delete(file);
+                            deletedCount++;
                             System.Diagnostics.Debug.WriteLine($"刪除舊日誌: {Path.GetFileName(file)}");
                         }
                     }
+                }
+
+                if (deletedCount > 0)
+                {
+                    Info($"自動清理完成: 刪除 {deletedCount} 個超過 {retentionDays} 天的舊日誌文件");
                 }
             }
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine($"清理舊日誌失敗: {ex.Message}");
+            }
+
+            return deletedCount;
+        }
+
+        /// <summary>
+        /// 獲取日誌文件統計信息
+        /// </summary>
+        public (int TotalFiles, long TotalSizeBytes, DateTime? OldestDate, DateTime? NewestDate) GetLogStatistics()
+        {
+            try
+            {
+                var logFiles = Directory.GetFiles(_logDirectory, "ROZeroLoginer_*.log");
+                long totalSize = 0;
+                DateTime? oldestDate = null;
+                DateTime? newestDate = null;
+
+                foreach (var file in logFiles)
+                {
+                    var fileInfo = new FileInfo(file);
+                    totalSize += fileInfo.Length;
+
+                    var fileName = Path.GetFileNameWithoutExtension(file);
+                    if (fileName.StartsWith("ROZeroLoginer_"))
+                    {
+                        var datePart = fileName.Substring("ROZeroLoginer_".Length);
+                        if (datePart.Length >= 8)
+                        {
+                            var dateString = datePart.Substring(0, 8);
+                            if (DateTime.TryParseExact(dateString, "yyyyMMdd", null, System.Globalization.DateTimeStyles.None, out DateTime fileDate))
+                            {
+                                if (!oldestDate.HasValue || fileDate < oldestDate.Value)
+                                    oldestDate = fileDate;
+                                if (!newestDate.HasValue || fileDate > newestDate.Value)
+                                    newestDate = fileDate;
+                            }
+                        }
+                    }
+                }
+
+                return (logFiles.Length, totalSize, oldestDate, newestDate);
+            }
+            catch
+            {
+                return (0, 0, null, null);
             }
         }
 
@@ -166,7 +227,7 @@ namespace ROZeroLoginer.Services
                 lock (_lockObject)
                 {
                     // 重新初始化日誌文件，清除所有內容
-                    var header = $"=== ROZero Loginer 日誌文件 - {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===";
+                    var header = $"=== Ragnarok Loginer 日誌文件 - {DateTime.Now:yyyy-MM-dd HH:mm:ss} ===";
                     File.WriteAllText(_currentLogFile, header + Environment.NewLine);
                 }
                 

@@ -13,16 +13,31 @@
 
         <!-- Header -->
         <Border Grid.Row="0" Style="{DynamicResource CardStyle}" Margin="0,0,0,8">
-            <StackPanel Orientation="Horizontal">
-                <TextBlock Text="日誌查看器" FontSize="18" FontWeight="SemiBold" 
-                           Foreground="{DynamicResource ForegroundBrush}" VerticalAlignment="Center"/>
-                <Button Name="RefreshButton" Content="重新整理" Style="{DynamicResource SecondaryButtonStyle}" 
-                        Click="RefreshButton_Click" Margin="20,0,0,0"/>
-                <Button Name="OpenLogDirButton" Content="開啟日誌目錄" Style="{DynamicResource SecondaryButtonStyle}" 
-                        Click="OpenLogDirButton_Click" Margin="8,0,0,0"/>
-                <Button Name="ClearLogButton" Content="清空當前日誌" Style="{DynamicResource DestructiveButtonStyle}" 
-                        Click="ClearLogButton_Click" Margin="8,0,0,0"/>
-            </StackPanel>
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <RowDefinition Height="Auto"/>
+                </Grid.RowDefinitions>
+
+                <StackPanel Grid.Row="0" Orientation="Horizontal">
+                    <TextBlock Text="日誌查看器" FontSize="18" FontWeight="SemiBold"
+                               Foreground="{DynamicResource ForegroundBrush}" VerticalAlignment="Center"/>
+                    <Button Name="RefreshButton" Content="重新整理" Style="{DynamicResource SecondaryButtonStyle}"
+                            Click="RefreshButton_Click" Margin="20,0,0,0"/>
+                    <Button Name="OpenLogDirButton" Content="開啟日誌目錄" Style="{DynamicResource SecondaryButtonStyle}"
+                            Click="OpenLogDirButton_Click" Margin="8,0,0,0"/>
+                    <Button Name="CleanupOldLogsButton" Content="清理舊日誌 (保留3天)" Style="{DynamicResource SecondaryButtonStyle}"
+                            Click="CleanupOldLogsButton_Click" Margin="8,0,0,0"/>
+                    <Button Name="ClearLogButton" Content="清空當前日誌" Style="{DynamicResource DestructiveButtonStyle}"
+                            Click="ClearLogButton_Click" Margin="8,0,0,0"/>
+                </StackPanel>
+
+                <!-- 日誌統計信息 -->
+                <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,8,0,0">
+                    <TextBlock Name="LogStatisticsTextBlock" FontSize="11"
+                               Foreground="{DynamicResource MutedForegroundBrush}" VerticalAlignment="Center"/>
+                </StackPanel>
+            </Grid>
         </Border>
 
         <!-- Log Content -->

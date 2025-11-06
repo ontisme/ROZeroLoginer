@@ -18,7 +18,7 @@ namespace ROZeroLoginer.Services
         private static IntPtr _hookID = IntPtr.Zero;
         private static Keys _targetKey = Keys.Home;
         private static Action _hotkeyAction;
-        private static WindowValidationService _windowValidationService;
+        private static WindowService _windowService;
 
         [DllImport("user32.dll", CharSet = CharSet.Auto, SetLastError = true)]
         private static extern IntPtr SetWindowsHookEx(int idHook,
@@ -39,7 +39,7 @@ namespace ROZeroLoginer.Services
 
         public LowLevelKeyboardHookService(AppSettings settings = null)
         {
-            _windowValidationService = new WindowValidationService(settings);
+            _windowService = new WindowService(settings);
         }
 
         public bool RegisterHotkey(Keys key, Action action)
@@ -90,7 +90,7 @@ namespace ROZeroLoginer.Services
                 if (key == _targetKey)
                 {
                     // 檢查當前視窗是否為 RO 遊戲視窗
-                    if (_windowValidationService?.IsRagnarokWindow() == true)
+                    if (_windowService?.IsRagnarokWindow() == true)
                     {
                         // 是RO視窗，攔截按鍵並執行動作
                         try
@@ -101,7 +101,7 @@ namespace ROZeroLoginer.Services
                         {
                             System.Diagnostics.Debug.WriteLine($"Hotkey action error: {ex.Message}");
                         }
-                        
+
                         // 返回非零值攔截按鍵
                         return (IntPtr)1;
                     }

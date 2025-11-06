@@ -27,7 +27,7 @@ namespace ROZeroLoginer
         private DataService _dataService;
         private readonly OtpService _otpService;
         private readonly LowLevelKeyboardHookService _hotkeyService;
-        private readonly WindowValidationService _windowValidationService;
+        private readonly WindowService _windowService;
         private DispatcherTimer _totpTimer;
         private ObservableCollection<Account> _accounts;
         private Account _selectedAccount;
@@ -73,7 +73,7 @@ namespace ROZeroLoginer
 
             // 記錄程序啟動
             var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
-            LogService.Instance.Info("=== ROZero Loginer v{0} 啟動 ===", version);
+            LogService.Instance.Info("=== Ragnarok Loginer v{0} 啟動 ===", version);
             LogService.Instance.Info("作業系統: {0}", Environment.OSVersion);
             LogService.Instance.Info("工作目錄: {0}", Environment.CurrentDirectory);
 
@@ -82,12 +82,12 @@ namespace ROZeroLoginer
             CurrentSettings = _dataService.GetSettings();
             
             _hotkeyService = new LowLevelKeyboardHookService(_currentSettings);
-            _windowValidationService = new WindowValidationService(_currentSettings);
+            _windowService = new WindowService(_currentSettings);
             DisplayAccounts = new ObservableCollection<AccountDisplayItem>();
             this.DataContext = this;
 
             // 設定視窗標題包含版本號
-            this.Title = $"Ragnarok Online Zero 帳號管理工具 v{version}";
+            this.Title = $"Ragnarok Online 帳號管理工具 v{version}";
 
             InitializeTimer();
             LoadAccounts();
@@ -142,7 +142,7 @@ namespace ROZeroLoginer
 
                 // 設定提示文字
                 var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
-                _trayIcon.Text = $"ROZero Loginer v{version}";
+                _trayIcon.Text = $"Ragnarok Loginer v{version}";
 
                 // 設定雙擊事件
                 _trayIcon.DoubleClick += TrayIcon_DoubleClick;
@@ -176,7 +176,7 @@ namespace ROZeroLoginer
                 // 第一次最小化時顯示通知
                 if (_currentSettings?.ShowNotifications == true)
                 {
-                    _trayIcon.ShowBalloonTip(2000, "ROZero Loginer", "已最小化到系統匣", WinForms.ToolTipIcon.Info);
+                    _trayIcon.ShowBalloonTip(2000, "Ragnarok Loginer", "已最小化到系統匣", WinForms.ToolTipIcon.Info);
                 }
             }
         }
@@ -602,7 +602,7 @@ namespace ROZeroLoginer
 
             if (_accounts == null || _accounts.Count == 0)
             {
-                System.Windows.MessageBox.Show("沒有可用的帳號", "ROZero Loginer", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
+                System.Windows.MessageBox.Show("沒有可用的帳號", "Ragnarok Loginer", System.Windows.MessageBoxButton.OK, System.Windows.MessageBoxImage.Information);
                 return;
             }
 
@@ -919,21 +919,12 @@ namespace ROZeroLoginer
         private void AboutButton_Click(object sender, RoutedEventArgs e)
         {
             var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
-            var aboutMessage = $"ROZero Loginer v{version}\n\n" +
-                              "Ragnarok Online Zero 帳號管理工具\n" +
-                              "支援 TOTP 驗證與自動登入功能\n\n" +
+            var aboutMessage = $"Ragnarok Loginer v{version}\n\n" +
                               "作者: ontisme\n" +
-                              "GitHub: https://github.com/ontisme\n\n" +
-                              "特色功能:\n" +
-                              "• 安全的帳號密碼管理\n" +
-                              "• TOTP 兩步驟驗證\n" +
-                              "• 全域熱鍵快速登入\n" +
-                              "• 遊戲視窗自動偵測\n" +
-                              "• shadcn/ui 風格介面\n\n" +
-                              "Copyright © ontisme 2025";
+                              "GitHub: https://github.com/ontisme\n\n";
 
             var result = System.Windows.MessageBox.Show(aboutMessage + "\n\n點擊「是」開啟 GitHub 頁面",
-                                       "關於 ROZero Loginer",
+                                       "關於 Ragnarok Loginer",
                                        System.Windows.MessageBoxButton.YesNo,
                                        System.Windows.MessageBoxImage.Information);
 
@@ -1093,10 +1084,12 @@ namespace ROZeroLoginer
                 var processInfo = new ProcessStartInfo
                 {
                     FileName = gameExecutable,
-                    Arguments = "1rag1",
+                    Arguments = settings.GameStartupArguments ?? "1rag1",
                     WorkingDirectory = gameDirectory,
                     UseShellExecute = true
                 };
+
+                LogService.Instance.Info("[StartGame] 啟動參數: {0}", processInfo.Arguments);
 
                 var gameProcess = Process.Start(processInfo);
 
@@ -1185,10 +1178,12 @@ namespace ROZeroLoginer
             var processInfo = new ProcessStartInfo
             {
                 FileName = gameExecutable,
-                Arguments = "1rag1",
+                Arguments = settings.GameStartupArguments ?? "1rag1",
                 WorkingDirectory = gameDirectory,
                 UseShellExecute = true
             };
+
+            LogService.Instance.Info("[StartGameOnly] 啟動參數: {0}", processInfo.Arguments);
 
             var gameProcess = Process.Start(processInfo);
 
@@ -1281,7 +1276,7 @@ namespace ROZeroLoginer
 
                 // 更新視窗標題（如果版本有變化）
                 var version = System.Reflection.Assembly.GetExecutingAssembly().GetName().Version.ToString(3);
-                this.Title = $"Ragnarok Online Zero 帳號管理工具 v{version}";
+                this.Title = $"Ragnarok Online 帳號管理工具 v{version}";
             }
             catch (Exception ex)
             {
@@ -1308,7 +1303,7 @@ namespace ROZeroLoginer
                 _trayIcon = null;
             }
             
-            LogService.Instance.Info("=== ROZero Loginer 已關閉 ===");
+            LogService.Instance.Info("=== Ragnarok Loginer 已關閉 ===");
         }
     }
 }

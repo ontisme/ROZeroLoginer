@@ -25,6 +25,7 @@ namespace ROZeroLoginer.Services
     public class InputService
     {
         private readonly GameResolutionService _resolutionService;
+        private readonly WindowService _windowService;
         private readonly AppSettings _settings;
 
         // 記錄已經登入的視窗句柄，避免重複使用
@@ -34,7 +35,74 @@ namespace ROZeroLoginer.Services
         public InputService(AppSettings settings = null)
         {
             _resolutionService = new GameResolutionService();
+            _windowService = new WindowService(settings);
             _settings = settings ?? new AppSettings();
+        }
+
+        /// <summary>
+        /// 檢查並確保 NumLock 是開啟的
+        /// 根據用戶反饋,NumLock 關閉會導致視窗無響應
+        /// </summary>
+        private void EnsureNumLockEnabled()
+        {
+            try
+            {
+                short numLockState = GetKeyState(VK_NUMLOCK);
+                bool isNumLockOn = (numLockState & 0x0001) != 0;
+
+                if (!isNumLockOn)
+                {
+                    LogService.Instance.Warning("[EnsureNumLock] NumLock 未開啟,嘗試自動開啟");
+
+                    // 模擬按下 NumLock 鍵來切換狀態
+                    SendKey(Keys.NumLock);
+                    Thread.Sleep(100);
+
+                    // 驗證是否成功開啟
+                    numLockState = GetKeyState(VK_NUMLOCK);
+                    isNumLockOn = (numLockState & 0x0001) != 0;
+
+                    if (isNumLockOn)
+                    {
+                        LogService.Instance.Info("[EnsureNumLock] NumLock 已自動開啟");
+                    }
+                    else
+                    {
+                        LogService.Instance.Warning("[EnsureNumLock] 無法自動開啟 NumLock,建議手動開啟以避免視窗無響應問題");
+                    }
+                }
+                else
+                {
+                    LogService.Instance.Debug("[EnsureNumLock] NumLock 已開啟");
+                }
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Warning("[EnsureNumLock] 檢查 NumLock 狀態時發生錯誤: {0}", ex.Message);
+            }
+        }
+
+        /// <summary>
+        /// 獲取當前鍵盤鎖定狀態信息(用於日誌記錄)
+        /// </summary>
+        private string GetKeyboardLockStates()
+        {
+            try
+            {
+                short numLockState = GetKeyState(VK_NUMLOCK);
+                short capsLockState = GetKeyState(VK_CAPITAL);
+                short scrollLockState = GetKeyState(VK_SCROLL);
+
+                bool numLockOn = (numLockState & 0x0001) != 0;
+                bool capsLockOn = (capsLockState & 0x0001) != 0;
+                bool scrollLockOn = (scrollLockState & 0x0001) != 0;
+
+                return $"NumLock:{(numLockOn ? "開" : "關")}, CapsLock:{(capsLockOn ? "開" : "關")}, ScrollLock:{(scrollLockOn ? "開" : "關")}";
+            }
+            catch
+            {
+                return "無法獲取";
+            }
         }
 
         /// <summary>
@@ -251,6 +319,13 @@ namespace ROZeroLoginer.Services
         [DllImport("user32.dll")]
         private static extern IntPtr GetParent(IntPtr hWnd);
 
+        [DllImport("user32.dll")]
+        private static extern short GetKeyState(int nVirtKey);
+
+        private const int VK_NUMLOCK = 0x90;
+        private const int VK_CAPITAL = 0x14;
+        private const int VK_SCROLL = 0x91;
+
         public delegate bool EnumWindowsProc(IntPtr hWnd, IntPtr lParam);
 
         [StructLayout(LayoutKind.Sequential)]
@@ -313,13 +388,20 @@ namespace ROZeroLoginer.Services
         {
             LogService.Instance.Info("[SendLogin] 開始登入流程 - 用戶: {0}, 跳過同意按鈕: {1}, 目標PID: {2}", username, skipAgreeButton, targetProcessId);
 
+            // 記錄當前鍵盤鎖定狀態
+            var keyboardStates = GetKeyboardLockStates();
+            LogService.Instance.Info("[SendLogin] 當前鍵盤狀態: {0}", keyboardStates);
+
+            // 確保 NumLock 開啟(根據用戶反饋,這能避免視窗無響應問題)
+            EnsureNumLockEnabled();
+
             try
             {
                 // 1. 查找目標遊戲視窗
                 var targetWindow = FindTargetWindow(targetProcessId);
 
-                // 2. 準備視窗環境
-                PrepareWindow(targetWindow, settings);
+                // 2. 準備視窗環境(包含視窗就緒檢測)
+                PrepareWindow(targetWindow, targetProcessId, settings);
 
                 // 3. 處理同意按鈕（如果需要）
                 if (!skipAgreeButton)
@@ -328,16 +410,16 @@ namespace ROZeroLoginer.Services
                 }
 
                 // 4. 輸入帳號密碼
-                InputCredentials(username, password, targetProcessId);
+                InputCredentials(targetWindow, username, password, targetProcessId);
 
                 // 5. 輸入 OTP
-                InputOTP(otpSecret, otpDelayMs, targetProcessId);
+                InputOTP(targetWindow, otpSecret, otpDelayMs, targetProcessId);
 
                 // 6. 選擇伺服器
-                SelectServer(server, autoSelectServer, targetProcessId);
+                SelectServer(targetWindow, server, autoSelectServer, targetProcessId);
 
                 // 7. 選擇角色
-                SelectCharacter(character, lastCharacter, autoSelectCharacter, targetProcessId);
+                SelectCharacter(targetWindow, character, lastCharacter, autoSelectCharacter, targetProcessId);
 
                 // 8. 完成登入
                 FinalizeLogin(targetWindow);
@@ -423,20 +505,32 @@ namespace ROZeroLoginer.Services
         }
 
         /// <summary>
-        /// 準備視窗環境（設為前台、載入解析度）
+        /// 準備視窗環境（設為前台、載入解析度、等待就緒）
         /// </summary>
-        private void PrepareWindow(IntPtr targetWindow, AppSettings settings)
+        private void PrepareWindow(IntPtr targetWindow, int targetProcessId, AppSettings settings)
         {
-            // 確保目標視窗在前台
-            bool setForegroundResult = SetForegroundWindow(targetWindow);
-            LogService.Instance.Debug("[PrepareWindow] SetForegroundWindow 結果: {0}", setForegroundResult);
-            Thread.Sleep(_settings.GeneralOperationDelayMs);
+            LogService.Instance.Info("[PrepareWindow] 開始準備視窗環境");
 
             // 載入遊戲解析度設定
             if (settings != null && !string.IsNullOrEmpty(settings.RoGamePath))
             {
                 _resolutionService.LoadResolutionFromConfig(settings.RoGamePath);
             }
+
+            // 使用增強的視窗就緒檢查(包含焦點設置和就緒狀態檢測)
+            bool isReady = _windowService.EnsureWindowFocusedAndReady(
+                targetWindow,
+                targetProcessId,
+                _settings.WindowFocusDelayMs);
+
+            if (!isReady)
+            {
+                throw new InvalidOperationException("視窗準備失敗: 無法設置焦點或視窗未就緒");
+            }
+
+            // 額外等待視窗穩定
+            Thread.Sleep(_settings.StepDelayMs);
+            LogService.Instance.Info("[PrepareWindow] 視窗環境準備完成");
         }
 
         /// <summary>
@@ -475,24 +569,24 @@ namespace ROZeroLoginer.Services
         /// <summary>
         /// 輸入帳號密碼
         /// </summary>
-        private void InputCredentials(string username, string password, int targetProcessId)
+        private void InputCredentials(IntPtr targetWindow, string username, string password, int targetProcessId)
         {
             LogService.Instance.Debug("[InputCredentials] 開始輸入帳號密碼");
 
             // 輸入帳號
-            CheckRagnarokWindowFocus(targetProcessId);
+            WaitAndEnsureReady(targetWindow, targetProcessId);
             SendText(username);
 
             // 按下 TAB 鍵切換到密碼欄位
-            CheckRagnarokWindowFocus(targetProcessId);
+            WaitAndEnsureReady(targetWindow, targetProcessId);
             SendKey(Keys.Tab);
 
             // 輸入密碼
-            CheckRagnarokWindowFocus(targetProcessId);
+            WaitAndEnsureReady(targetWindow, targetProcessId);
             SendText(password);
 
             // 按下 ENTER 鍵提交
-            CheckRagnarokWindowFocus(targetProcessId);
+            WaitAndEnsureReady(targetWindow, targetProcessId);
             SendKey(Keys.Enter);
 
             LogService.Instance.Debug("[InputCredentials] 帳號密碼輸入完成");
@@ -501,7 +595,7 @@ namespace ROZeroLoginer.Services
         /// <summary>
         /// 輸入 OTP
         /// </summary>
-        private void InputOTP(string otpSecret, int otpDelayMs, int targetProcessId)
+        private void InputOTP(IntPtr targetWindow, string otpSecret, int otpDelayMs, int targetProcessId)
         {
             LogService.Instance.Debug("[InputOTP] 開始 OTP 輸入流程");
 
@@ -509,13 +603,13 @@ namespace ROZeroLoginer.Services
             Thread.Sleep(otpDelayMs);
 
             // 檢查並等待 OTP 時間充足再輸入
-            CheckRagnarokWindowFocus(targetProcessId);
+            WaitAndEnsureReady(targetWindow, targetProcessId);
             string finalOtp = WaitForValidOtpTime(otpSecret, targetProcessId);
             SendText(finalOtp);
             Thread.Sleep(_settings.KeyboardInputDelayMs);
 
             // 按下 ENTER 鍵提交
-            CheckRagnarokWindowFocus(targetProcessId);
+            WaitAndEnsureReady(targetWindow, targetProcessId);
             SendKey(Keys.Enter);
 
             LogService.Instance.Debug("[InputOTP] OTP 輸入完成");
@@ -524,18 +618,17 @@ namespace ROZeroLoginer.Services
         /// <summary>
         /// 選擇伺服器
         /// </summary>
-        private void SelectServer(int server, bool autoSelectServer, int targetProcessId)
+        private void SelectServer(IntPtr targetWindow, int server, bool autoSelectServer, int targetProcessId)
         {
             LogService.Instance.Debug("[SelectServer] 開始伺服器選擇 - 伺服器: {0}, 自動選擇: {1}", server, autoSelectServer);
 
-            Thread.Sleep(_settings.GeneralOperationDelayMs);
-            CheckRagnarokWindowFocus(targetProcessId);
+            WaitAndEnsureReady(targetWindow, targetProcessId);
 
             if (autoSelectServer && server > 0)
             {
                 LogService.Instance.Debug("[SelectServer] 執行伺服器選擇邏輯");
 
-                // 強制先往上四次回到第一個位置
+                // 強制先往上回到第一個位置
                 for (int i = 0; i < 10; i++)
                 {
                     SendKey(Keys.Up);
@@ -548,78 +641,80 @@ namespace ROZeroLoginer.Services
                     SendKey(Keys.Down);
                     Thread.Sleep(_settings.ServerSelectionDelayMs);
                 }
+
+                // ✅ 只在自動選擇時才按Enter確認
+                WaitAndEnsureReady(targetWindow, targetProcessId);
+                SendKey(Keys.Enter);
+                LogService.Instance.Debug("[SelectServer] 伺服器選擇完成並確認進入");
             }
             else
             {
-                LogService.Instance.Debug("[SelectServer] 跳過伺服器選擇 - server={0}, autoSelect={1}", server, autoSelectServer);
+                // ✅ 如果不自動選擇,停留在伺服器選擇畫面,不執行Enter
+                LogService.Instance.Info("[SelectServer] 未勾選自動選擇伺服器,停留在伺服器選擇畫面");
             }
-
-            CheckRagnarokWindowFocus(targetProcessId);
-            SendKey(Keys.Enter);
-            
-            LogService.Instance.Debug("[SelectServer] 伺服器選擇完成");
         }
 
         /// <summary>
         /// 選擇角色
         /// </summary>
-        private void SelectCharacter(int character, int lastCharacter, bool autoSelectCharacter, int targetProcessId)
+        private void SelectCharacter(IntPtr targetWindow, int character, int lastCharacter, bool autoSelectCharacter, int targetProcessId)
         {
             LogService.Instance.Debug("[SelectCharacter] 開始角色選擇 - 角色: {0}, 上次角色: {1}, 自動選擇: {2}", character, lastCharacter, autoSelectCharacter);
 
-            Thread.Sleep(_settings.GeneralOperationDelayMs);
-            CheckRagnarokWindowFocus(targetProcessId);
+            WaitAndEnsureReady(targetWindow, targetProcessId);
 
             if (autoSelectCharacter && character > 0)
             {
                 LogService.Instance.Debug("[SelectCharacter] 執行角色選擇邏輯 - 目標角色: {0}", character);
-                
+
                 // 5x3 網格的絕對定位邏輯
                 // 角色排列：1-5第一排，6-10第二排，11-15第三排
-                
+
                 // 強制回到左上角 (角色1的位置)
-                for (int i = 0; i < 10; i++) 
+                for (int i = 0; i < 10; i++)
                 {
                     SendKey(Keys.Left);
                     Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
-                
+
                 for (int i = 0; i < 10; i++)
                 {
                     SendKey(Keys.Up);
                     Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
-                
+
                 // 計算目標位置
                 int targetRow = (character - 1) / 5; // 0=第一排, 1=第二排, 2=第三排
                 int targetCol = (character - 1) % 5; // 0-4 對應左到右的位置
-                
+
                 LogService.Instance.Debug("[SelectCharacter] 目標位置: 第{0}排, 第{1}列", targetRow + 1, targetCol + 1);
-                
+
                 // 移動到目標行
                 for (int i = 0; i < targetRow; i++)
                 {
                     SendKey(Keys.Down);
                     Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
-                
+
                 // 移動到目標列
                 for (int i = 0; i < targetCol; i++)
                 {
                     SendKey(Keys.Right);
                     Thread.Sleep(_settings.CharacterSelectionDelayMs);
                 }
-                
+
                 LogService.Instance.Debug("[SelectCharacter] 已移動到角色{0}的位置", character);
+
+                // ✅ 只在自動選擇時才按Enter確認進入遊戲
+                WaitAndEnsureReady(targetWindow, targetProcessId);
+                SendKey(Keys.Enter);
+                LogService.Instance.Debug("[SelectCharacter] 角色選擇完成並確認進入遊戲");
             }
             else
             {
-                LogService.Instance.Debug("[SelectCharacter] 跳過角色選擇 - character={0}, autoSelect={1}", character, autoSelectCharacter);
+                // ✅ 如果不自動選擇,停留在角色選擇畫面,不執行Enter
+                LogService.Instance.Info("[SelectCharacter] 未勾選自動選擇角色,停留在角色選擇畫面");
             }
-
-            SendKey(Keys.Enter);
-            
-            LogService.Instance.Debug("[SelectCharacter] 角色選擇完成");
         }
 
         /// <summary>
@@ -1141,6 +1236,54 @@ namespace ROZeroLoginer.Services
                     throw new InvalidOperationException("當前前台視窗不是 Ragnarok Online 遊戲視窗！操作已停止以確保安全。");
                 }
             }
+        }
+
+        /// <summary>
+        /// 確保視窗就緒並獲得焦點(增強版本)
+        /// 結合視窗焦點檢查和視窗就緒狀態檢測
+        /// </summary>
+        /// <param name="windowHandle">視窗句柄</param>
+        /// <param name="targetProcessId">目標進程ID</param>
+        private void EnsureWindowReadyAndFocused(IntPtr windowHandle, int targetProcessId = 0)
+        {
+            try
+            {
+                LogService.Instance.Debug("[EnsureWindowReady] 開始確保視窗就緒: 視窗 {0}, PID {1}",
+                    windowHandle.ToInt64(), targetProcessId);
+
+                // 使用 WindowService 的綜合檢查(包含自動重試焦點)
+                bool isReady = _windowService.EnsureWindowFocusedAndReady(
+                    windowHandle,
+                    targetProcessId,
+                    _settings.WindowFocusDelayMs,
+                    _settings.WindowFocusRetries);
+
+                if (!isReady)
+                {
+                    string errorMsg = targetProcessId > 0
+                        ? $"視窗未就緒或焦點設置失敗（PID: {targetProcessId}）"
+                        : "視窗未就緒或焦點設置失敗";
+
+                    LogService.Instance.Error("[EnsureWindowReady] {0}", errorMsg);
+                    throw new InvalidOperationException(errorMsg);
+                }
+
+                LogService.Instance.Debug("[EnsureWindowReady] 視窗就緒確認完成");
+            }
+            catch (Exception ex)
+            {
+                LogService.Instance.Error("[EnsureWindowReady] 確保視窗就緒時發生錯誤: {0}", ex.Message);
+                throw;
+            }
+        }
+
+        /// <summary>
+        /// 在執行輸入操作前等待一小段時間並檢查視窗狀態
+        /// </summary>
+        private void WaitAndEnsureReady(IntPtr windowHandle, int targetProcessId = 0)
+        {
+            Thread.Sleep(_settings.StepDelayMs);
+            EnsureWindowReadyAndFocused(windowHandle, targetProcessId);
         }
 
         private string WaitForValidOtpTime(string otpSecret, int targetProcessId = 0)

@@ -7,6 +7,7 @@ using System.Windows.Forms;
 using ROZeroLoginer.Models;
 using Microsoft.Win32;
 using MessageBox = System.Windows.MessageBox;
+using Application = System.Windows.Application;
 
 namespace ROZeroLoginer.Windows
 {
@@ -35,12 +36,13 @@ namespace ROZeroLoginer.Windows
                 HidePasswords = settings.HidePasswords,
                 HideSecretKeys = settings.HideSecretKeys,
                 RoGamePath = settings.RoGamePath,
+                GameStartupArguments = settings.GameStartupArguments,
                 GameTitles = new System.Collections.Generic.List<string>(settings.GameTitles),
                 CharacterSelectionDelayMs = settings.CharacterSelectionDelayMs,
                 ServerSelectionDelayMs = settings.ServerSelectionDelayMs,
                 KeyboardInputDelayMs = settings.KeyboardInputDelayMs,
                 MouseClickDelayMs = settings.MouseClickDelayMs,
-                GeneralOperationDelayMs = settings.GeneralOperationDelayMs,
+                StepDelayMs = settings.StepDelayMs,
                 MinimizeToTray = settings.MinimizeToTray,
                 WindowWidth = settings.WindowWidth,
                 WindowHeight = settings.WindowHeight,
@@ -71,14 +73,15 @@ namespace ROZeroLoginer.Windows
             HidePasswordsCheckBox.IsChecked = _settings.HidePasswords;
             HideSecretKeysCheckBox.IsChecked = _settings.HideSecretKeys;
             RoGamePathTextBox.Text = _settings.RoGamePath;
-            
+            GameStartupArgumentsTextBox.Text = _settings.GameStartupArguments ?? "1rag1";
+
             // 延遲設定
             CharacterSelectionDelayTextBox.Text = _settings.CharacterSelectionDelayMs.ToString();
             ServerSelectionDelayTextBox.Text = _settings.ServerSelectionDelayMs.ToString();
             KeyboardInputDelayTextBox.Text = _settings.KeyboardInputDelayMs.ToString();
             MouseClickDelayTextBox.Text = _settings.MouseClickDelayMs.ToString();
-            GeneralOperationDelayTextBox.Text = _settings.GeneralOperationDelayMs.ToString();
-            
+            StepDelayTextBox.Text = _settings.StepDelayMs.ToString();
+
             LoadGameTitles();
 
             // 設定熱鍵下拉選單
@@ -158,10 +161,10 @@ namespace ROZeroLoginer.Windows
                 return false;
             }
 
-            if (!int.TryParse(GeneralOperationDelayTextBox.Text, out int generalDelay) || generalDelay < 100 || generalDelay > 5000)
+            if (!int.TryParse(StepDelayTextBox.Text, out int stepDelay) || stepDelay < 100 || stepDelay > 5000)
             {
-                MessageBox.Show("一般操作延遲必須介於 100 到 5000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
-                GeneralOperationDelayTextBox.Focus();
+                MessageBox.Show("步驟延遲必須介於 100 到 5000 毫秒之間", "驗證錯誤", MessageBoxButton.OK, MessageBoxImage.Warning);
+                StepDelayTextBox.Focus();
                 return false;
             }
 
@@ -184,14 +187,15 @@ namespace ROZeroLoginer.Windows
             _settings.HidePasswords = HidePasswordsCheckBox.IsChecked == true;
             _settings.HideSecretKeys = HideSecretKeysCheckBox.IsChecked == true;
             _settings.RoGamePath = RoGamePathTextBox.Text;
-            
+            _settings.GameStartupArguments = GameStartupArgumentsTextBox.Text;
+
             // 延遲設定
             _settings.CharacterSelectionDelayMs = int.Parse(CharacterSelectionDelayTextBox.Text);
             _settings.ServerSelectionDelayMs = int.Parse(ServerSelectionDelayTextBox.Text);
             _settings.KeyboardInputDelayMs = int.Parse(KeyboardInputDelayTextBox.Text);
             _settings.MouseClickDelayMs = int.Parse(MouseClickDelayTextBox.Text);
-            _settings.GeneralOperationDelayMs = int.Parse(GeneralOperationDelayTextBox.Text);
-            
+            _settings.StepDelayMs = int.Parse(StepDelayTextBox.Text);
+
             // 設定熱鍵
             var selectedItem = HotkeyComboBox.SelectedItem as ComboBoxItem;
             if (selectedItem != null)
@@ -410,16 +414,20 @@ namespace ROZeroLoginer.Windows
 
         private void SetAgreeButtonPositionButton_Click(object sender, RoutedEventArgs e)
         {
-            var positionWindow = new AgreeButtonPositionWindow(_settings);
+            // 尋找主視窗
+            Window mainWindow = Application.Current.MainWindow;
+
+            // 傳遞主視窗和設定視窗引用,以便最小化
+            var positionWindow = new AgreeButtonPositionWindow(_settings, mainWindow, this);
             positionWindow.ShowDialog();
 
-            // 檢查是否成功捕獲位置，而不僅依賴 DialogResult
+            // 檢查是否成功捕獲位置,而不僅依賴 DialogResult
             if (positionWindow.PositionCaptured)
             {
                 _settings.CustomAgreeButtonX = positionWindow.CapturedX;
                 _settings.CustomAgreeButtonY = positionWindow.CapturedY;
                 UpdateAgreeButtonPositionDisplay();
-                MessageBox.Show("同意按鈕位置已設定成功！", "設定完成", MessageBoxButton.OK, MessageBoxImage.Information);
+                MessageBox.Show("同意按鈕位置已設定成功!", "設定完成", MessageBoxButton.OK, MessageBoxImage.Information);
             }
         }
 

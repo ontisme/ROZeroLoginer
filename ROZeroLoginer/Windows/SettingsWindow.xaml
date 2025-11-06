@@ -138,6 +138,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,5">
@@ -147,17 +148,22 @@
                             Width="60" Height="32" Click="BrowseGamePathButton_Click" Margin="5,0,0,0" VerticalAlignment="Center"/>
                         </StackPanel>
 
-                        <TextBlock Grid.Row="1" Text="設定 RO 主程式位置以啟用遊戲啟動功能"
+                        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,5">
+                            <TextBlock Text="遊戲啟動參數: " VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBox Name="GameStartupArgumentsTextBox" Width="250" Text="1rag1" Height="24" VerticalAlignment="Center"/>
+                        </StackPanel>
+
+                        <TextBlock Grid.Row="2" Text="設定 RO 主程式位置以啟用遊戲啟動功能,啟動參數預設為 1rag1"
                            Foreground="Gray" FontSize="11" Margin="0,5"/>
 
-                        <Separator Grid.Row="2" Margin="0,10"/>
+                        <Separator Grid.Row="3" Margin="0,10"/>
 
-                        <CheckBox Grid.Row="3" Name="UseCustomAgreeButtonCheckBox"
+                        <CheckBox Grid.Row="4" Name="UseCustomAgreeButtonCheckBox"
                                   Content="使用自定義【同意】按鈕位置" IsChecked="False" Margin="0,10,0,5"
                                   Checked="UseCustomAgreeButtonCheckBox_Changed"
                                   Unchecked="UseCustomAgreeButtonCheckBox_Changed"/>
 
-                        <StackPanel Grid.Row="4" Orientation="Vertical" Margin="20,5,0,5">
+                        <StackPanel Grid.Row="5" Orientation="Vertical" Margin="20,5,0,5">
                             <StackPanel Orientation="Horizontal" Margin="0,5">
                                 <TextBlock Name="AgreeButtonPositionTextBlock" Text="位置: 未設定"
                                            VerticalAlignment="Center" Margin="0,0,15,0" Width="200"/>
@@ -220,9 +226,9 @@
                         </StackPanel>
 
                         <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="一般操作延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0" Width="140"/>
-                            <TextBox Name="GeneralOperationDelayTextBox" Width="80" Text="500"/>
-                            <TextBlock Text="(建議: 500-1000)" VerticalAlignment="Center" Margin="10,0,0,0" 
+                            <TextBlock Text="全局步驟延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0" Width="140"/>
+                            <TextBox Name="StepDelayTextBox" Width="80" Text="500"/>
+                            <TextBlock Text="(建議: 300-1000)" VerticalAlignment="Center" Margin="10,0,0,0"
                                        Foreground="Gray" FontSize="11"/>
                         </StackPanel>
                     </Grid>
