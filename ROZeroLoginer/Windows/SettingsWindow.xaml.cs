@@ -30,6 +30,7 @@ namespace ROZeroLoginer.Windows
                 ShowNotifications = settings.ShowNotifications,
                 OtpValiditySeconds = settings.OtpValiditySeconds,
                 OtpInputDelayMs = settings.OtpInputDelayMs,
+                AutoInputOtp = settings.AutoInputOtp,
                 PrivacyModeEnabled = settings.PrivacyModeEnabled,
                 HideNames = settings.HideNames,
                 HideUsernames = settings.HideUsernames,
@@ -65,6 +66,7 @@ namespace ROZeroLoginer.Windows
             MinimizeToTrayCheckBox.IsChecked = _settings.MinimizeToTray;
             OtpValidityTextBox.Text = _settings.OtpValiditySeconds.ToString();
             OtpDelayTextBox.Text = _settings.OtpInputDelayMs.ToString();
+            AutoInputOtpCheckBox.IsChecked = _settings.AutoInputOtp;
             
             // 隱私模式設定
             PrivacyModeEnabledCheckBox.IsChecked = _settings.PrivacyModeEnabled;
@@ -179,6 +181,7 @@ namespace ROZeroLoginer.Windows
             _settings.MinimizeToTray = MinimizeToTrayCheckBox.IsChecked == true;
             _settings.OtpValiditySeconds = int.Parse(OtpValidityTextBox.Text);
             _settings.OtpInputDelayMs = int.Parse(OtpDelayTextBox.Text);
+            _settings.AutoInputOtp = AutoInputOtpCheckBox.IsChecked == true;
             
             // 隱私模式設定
             _settings.PrivacyModeEnabled = PrivacyModeEnabledCheckBox.IsChecked == true;

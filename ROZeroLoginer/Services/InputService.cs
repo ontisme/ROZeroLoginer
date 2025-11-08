@@ -597,6 +597,13 @@ namespace ROZeroLoginer.Services
         /// </summary>
         private void InputOTP(IntPtr targetWindow, string otpSecret, int otpDelayMs, int targetProcessId)
         {
+            // 檢查是否啟用自動輸入 OTP
+            if (!_settings.AutoInputOtp)
+            {
+                LogService.Instance.Info("[InputOTP] 自動輸入 OTP 已停用，跳過 OTP 輸入");
+                return;
+            }
+
             LogService.Instance.Debug("[InputOTP] 開始 OTP 輸入流程");
 
             // 等待 OTP 視窗出現
@@ -1282,6 +1289,7 @@ namespace ROZeroLoginer.Services
         /// </summary>
         private void WaitAndEnsureReady(IntPtr windowHandle, int targetProcessId = 0)
         {
+            LogService.Instance.Debug($"[WaitAndEnsureReady] 步驟延遲 ${_settings.StepDelayMs}ms");
             Thread.Sleep(_settings.StepDelayMs);
             EnsureWindowReadyAndFocused(windowHandle, targetProcessId);
         }

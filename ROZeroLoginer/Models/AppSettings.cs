@@ -14,6 +14,7 @@ namespace ROZeroLoginer.Models
         private bool _showNotifications = true;
         private int _otpValiditySeconds = 30;
         private int _otpInputDelayMs = 2000;
+        private bool _autoInputOtp = true;
         private bool _privacyModeEnabled = true;
         private bool _hideNames = false;
         private bool _hideUsernames = false;
@@ -98,6 +99,16 @@ namespace ROZeroLoginer.Models
             set
             {
                 _otpInputDelayMs = value;
+                OnPropertyChanged();
+            }
+        }
+
+        public bool AutoInputOtp
+        {
+            get => _autoInputOtp;
+            set
+            {
+                _autoInputOtp = value;
                 OnPropertyChanged();
             }
         }

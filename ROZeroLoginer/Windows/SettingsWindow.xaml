@@ -71,6 +71,7 @@
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
                             <RowDefinition Height="Auto"/>
+                            <RowDefinition Height="Auto"/>
                         </Grid.RowDefinitions>
 
                         <CheckBox Grid.Row="0" Name="StartWithWindowsCheckBox" Content="開機時自動啟動" 
@@ -83,14 +84,17 @@
                           IsChecked="False" Margin="0,5"/>
 
                         <StackPanel Grid.Row="3" Orientation="Horizontal" Margin="0,5">
-                            <TextBlock Text="TOTP 有效期 (秒): " VerticalAlignment="Center" Margin="0,0,10,0"/>
+                            <TextBlock Text="OTP 有效期 (秒): " VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <TextBox Name="OtpValidityTextBox" Width="100" Text="30"/>
                         </StackPanel>
 
-                        <StackPanel Grid.Row="4" Orientation="Horizontal" Margin="0,5">
+                        <CheckBox Grid.Row="4" Name="AutoInputOtpCheckBox" Content="啟用自動輸入 OTP"
+                          IsChecked="True" Margin="0,5"/>
+
+                        <StackPanel Grid.Row="5" Orientation="Horizontal" Margin="0,5">
                             <TextBlock Text="OTP 輸入延遲 (毫秒): " VerticalAlignment="Center" Margin="0,0,10,0"/>
                             <TextBox Name="OtpDelayTextBox" Width="100" Text="2000"/>
-                            <TextBlock Text="(建議: 100-5000)" VerticalAlignment="Center" Margin="10,0,0,0" 
+                            <TextBlock Text="(建議: 100-5000)" VerticalAlignment="Center" Margin="10,0,0,0"
                                Foreground="Gray" FontSize="11"/>
                         </StackPanel>
 
