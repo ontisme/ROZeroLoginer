@@ -53,20 +53,6 @@ jobs:
       with:
         tag_name: ${{ github.ref_name }}
         name: ROZeroLoginer ${{ github.ref_name }}
-        body: |
-          ## 🚀 新功能
-          - ✨ 自動啟動遊戲並自動登入功能
-          - 📝 批次修改帳號功能
-          - 📂 分組標籤頁顯示功能
-          - ☑️ 帳號全選/全不選/批次啟動功能
-          - 🏷️ 版本號顯示在視窗標題
-          - 🕒 自動戰鬥延遲設定選項
-          
-          ## 🔧 技術改進
-          - ⏰ 優化 TOTP 生成，增加時間同步
-          - 🎨 改進帳號選擇視窗介面
-          - 💅 改善 UI 佈局和樣式
-          - 📋 新增應用程式清單檔案
         files: ./ROZeroLoginer-${{ github.ref_name }}.zip
         draft: false
         prerelease: false
