@@ -8,13 +8,19 @@
     <Grid Margin="20">
         <Grid.RowDefinitions>
             <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
             <RowDefinition Height="*"/>
             <RowDefinition Height="Auto"/>
         </Grid.RowDefinitions>
 
         <TextBlock Grid.Row="0" Text="請選擇要登入的帳號:" FontSize="14" FontWeight="Bold" Margin="0,0,0,10"/>
 
-        <DataGrid Grid.Row="1" Name="AccountsDataGrid" AutoGenerateColumns="False" 
+        <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,0,0,10">
+            <TextBlock Text="分組:" VerticalAlignment="Center" Margin="0,0,8,0"/>
+            <ComboBox Name="GroupFilterComboBox" Width="200" SelectionChanged="GroupFilterComboBox_SelectionChanged"/>
+        </StackPanel>
+
+        <DataGrid Grid.Row="2" Name="AccountsDataGrid" AutoGenerateColumns="False" 
                   SelectionMode="Single" CanUserAddRows="False" 
                   MouseDoubleClick="AccountsDataGrid_MouseDoubleClick"
                   SelectionChanged="AccountsDataGrid_SelectionChanged">
@@ -24,7 +30,7 @@
             </DataGrid.Columns>
         </DataGrid>
 
-        <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,20,0,0">
             <Button Name="SelectButton" Content="選擇" Style="{StaticResource ButtonStyle}" 
                     Width="80" Click="SelectButton_Click" IsDefault="True" IsEnabled="False"/>
             <Button Name="CancelButton" Content="取消" Style="{StaticResource ButtonStyle}" 

@@ -30,16 +30,20 @@ namespace ROZeroLoginer.Windows
         private const int SW_SHOW = 5;
 
         private List<Account> _accounts;
+        private List<Account> _allAccounts;
         private Account _preselectedAccount;
+        private string _currentGroupFilter = "所有分組";
 
         public Account SelectedAccount { get; private set; }
 
         public AccountSelectionWindow(List<Account> accounts, Account preselectedAccount = null)
         {
             InitializeComponent();
-            
+
+            _allAccounts = accounts;
             _accounts = accounts;
             _preselectedAccount = preselectedAccount;
+            LoadGroupFilter();
             LoadAccounts();
             
             // 確保視窗獲得焦點以接收鍵盤事件
@@ -75,17 +79,56 @@ namespace ROZeroLoginer.Windows
             };
         }
 
+        private void LoadGroupFilter()
+        {
+            var groups = _allAccounts
+                .Select(a => a.Group)
+                .Where(g => !string.IsNullOrEmpty(g))
+                .Distinct()
+                .OrderBy(g => g)
+                .ToList();
+
+            GroupFilterComboBox.Items.Clear();
+            GroupFilterComboBox.Items.Add("所有分組");
+
+            foreach (var group in groups)
+            {
+                GroupFilterComboBox.Items.Add(group);
+            }
+
+            GroupFilterComboBox.SelectedIndex = 0;
+        }
+
+        private void GroupFilterComboBox_SelectionChanged(object sender, SelectionChangedEventArgs e)
+        {
+            if (GroupFilterComboBox.SelectedItem == null) return;
+
+            _currentGroupFilter = GroupFilterComboBox.SelectedItem.ToString();
+            ApplyGroupFilter();
+        }
+
+        private void ApplyGroupFilter()
+        {
+            if (_currentGroupFilter == "所有分組")
+            {
+                _accounts = _allAccounts;
+            }
+            else
+            {
+                _accounts = _allAccounts.Where(a => a.Group == _currentGroupFilter).ToList();
+            }
+
+            LoadAccounts();
+        }
+
         private void LoadAccounts()
         {
-            // 按帳號順序排序
             AccountsDataGrid.ItemsSource = _accounts;
-            
-            // 自動選擇預選帳號或第一個帳號
+
             if (_accounts.Count > 0)
             {
                 int selectedIndex = 0;
-                
-                // 如果有預選帳號，尋找其索引
+
                 if (_preselectedAccount != null)
                 {
                     for (int i = 0; i < _accounts.Count; i++)
@@ -93,12 +136,12 @@ namespace ROZeroLoginer.Windows
                         if (_accounts[i].Id == _preselectedAccount.Id)
                         {
                             selectedIndex = i;
-                            System.Diagnostics.Debug.WriteLine($"自動選中對應帳號: {_preselectedAccount.Name}");
+                            System.Diagnostics.Debug.WriteLine($"Auto-selected account: {_preselectedAccount.Name}");
                             break;
                         }
                     }
                 }
-                
+
                 AccountsDataGrid.SelectedIndex = selectedIndex;
             }
         }
